@@ -7,7 +7,8 @@ Author: Scott Rodkey - rodkeyscott@gmail.com
 Step-by-step tutorial: https://medium.com/@rodkey/deploying-a-flask-application-on-aws-a72daba6bb80
 '''
 
-from flask import Flask, render_template, request, flash, redirect, url_for
+import sqlite3
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from application import db
 from application.models import User, RecommendedRecipe
 from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate
@@ -40,9 +41,6 @@ def index():
             db.session.commit()
             db.session.expunge(query_db)
             db.session.close()
-        # except IntegrityError as e:
-        #     reason = e.message
-        #     logging.warning(reason)
         except:
             db.session.rollback()
         return render_template('thanks.html',username = userInfoDict.get("username"),
@@ -75,10 +73,13 @@ def index():
 def delete_user():
     deleteUserForm = DeleteUserInfo(request.form)
     if request.method == 'POST' and deleteUserForm.validate():
+        username_return = deleteUserForm.userRetrieve.data
         try:
-            username_return = deleteUserForm.userRetrieve.data
-            query_db = User.query.filter_by(username=username_return).one()
-            db.session.delete(query_db)
+            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("DELETE FROM users WHERE username=(?)",[username_return])
+                con.commit()
+                cur.close()
             db.session.commit()
             db.session.close()
         except:
@@ -108,10 +109,24 @@ def add_history():
         userInfoDict = dict(item.split("=") for item in createRecipeForm.dbInfo.data.split(";"))
         data_entered = RecommendedRecipe(user_id=userInfoDict.get("username"), recipe_id=userInfoDict.get("recipe_id"), recipe_name=userInfoDict.get("recipe_name"), date_recommended=userInfoDict.get("date"))
         try:
+            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))",(userInfoDict.get("username"), userInfoDict.get("recipe_id"),userInfoDict.get("recipe_name"), userInfoDict.get("date")))
+                result_arr = []
+                for item in query_db:
+                    recipe_dict = {}
+                    recipe_dict["user_id"] = item[0]
+                    recipe_dict["recipe_id"] = item[1]
+                    recipe_dict["recipe_name"] = item[2]
+                    recipe_dict["date_recommended"] = item[3]
+                    result_arr.append(user_dict)
             db.session.add(data_entered)
             db.session.commit()
             db.session.expunge(query_db)
             db.session.close()
+        except sqlite3.IntegrityError:
+            db.session.rollback()
+            return render_template('recipe-insert-fail.html', user_id=userInfoDict.get("username"), recipe_id=userInfoDict.get("recipe_id"))
         except:
             db.session.rollback()
         return render_template('recipe-results.html', results=data_entered)
@@ -123,29 +138,37 @@ def view_history():
         query_db = None
         try:
             username_return = getUserRecRecipeHistForm.userRetrieve.data
-            query_db = RecommendedRecipe.query.filter_by(user_id=username_return)
-            # db.session.expunge(query_db)
+            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("SELECT * FROM recommendedrecipes WHERE user_id=(?)",[username_return])
+                result_arr = []
+                for item in query_db:
+                    user_dict = {}
+                    user_dict["recipe_id"] = item[0]
+                    user_dict["user_id"] = item[1]
+                    user_dict["recipe_name"] = item[2]
+                    user_dict["date_recommended"] = item[3]
+                    result_arr.append(user_dict)
             db.session.close()
         except:
             db.session.rollback()
             return render_template('noresult.html', username_return=username_return)
-        return render_template('view-user-history.html', username_return=username_return, results=query_db)
-
+        return render_template('view-user-history.html', username_return=username_return, results=result_arr)
 
 @application.route('/delete-history', methods=['POST'])
 def delete_history():
     deleteUserRecHistForm = DeleteRecRecipeInfo(request.form)
     if request.method == 'POST' and deleteUserRecHistForm.validate():
         username_return = deleteUserRecHistForm.userRetrieve.data
-        # query_db = RecommendedRecipe.query.filter_by(user_id=username_return)
-        delete_q = RecommendedRecipe.__table__.delete().where(RecommendedRecipe.user_id == username_return)
         try:
-            # db.session.delete(query_db)
-            db.session.execute(delete_q)
-            # RecommendedRecipe.delete().where(user_id=username_return)
-            # db.session.query(RecommendedRecipe).filter(user_id=username_return).delete(synchronize_session='fetch')
-            db.session.commit()
+            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("DELETE FROM recommendedrecipes WHERE user_id=(?)", [username_return])
+                con.commit()
+                cur.close()
+            #db.session.commit()
             db.session.close()
+            #con.close()
         except:
             db.session.rollback()
         return redirect('/')
@@ -155,9 +178,10 @@ def update_user_history():
     updateUserRecDateForm = UpdateRecRecipeDate(request.form)
     if request.method == 'POST' and updateUserRecDateForm.validate():
         userInfoDict = dict(item.split("=") for item in updateUserRecDateForm.userInfo.data.split(";"))
-        query_db = RecommendedRecipe.query.filter_by(user_id=userInfoDict.get("username"), recipe_id=userInfoDict.get("recipe_id")).one()
         try:
-            query_db.date_recommended = userInfoDict.get("date")
+            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("UPDATE recommendedrecipes SET date_recommended=(?) WHERE user_id=(?) AND recipe_id=(?)",(userInfoDict.get("date"), userInfoDict.get("username"), userInfoDict.get("recipe_id")))
             db.session.commit()
             db.session.close()
         except:
