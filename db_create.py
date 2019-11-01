@@ -1,5 +1,5 @@
 from application import db
-from application.models import User
+from application.models import User, RecommendedRecipe
 
 db.create_all()
 

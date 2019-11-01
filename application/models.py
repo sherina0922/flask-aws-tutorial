@@ -27,4 +27,20 @@ class User(db.Model):
         self.notes = notes
 
     def __repr__(self):
-        return '<User %r>' % self.notes
+        return '<User %r>' % self.name
+
+class RecommendedRecipe(db.Model):
+    __tablename__ = 'recommendedrecipes'
+    recipe_id = db.Column(db.Integer, primary_key=True) #change integer to string for username
+    user_id = db.Column(db.String(128), primary_key=True)
+    recipe_name = db.Column(db.String(128))
+    date_recommended = db.Date
+
+    def __init__(self, recipe_id, user_id, recipe_name, date_recommended):
+        self.recipe_id = recipe_id
+        self.user_id = user_id
+        self.date_recommended = date_recommended
+        self.recipe_name = recipe_name
+
+    def __repr__(self):
+        return '<Recipe %r>' % self.recipe_name

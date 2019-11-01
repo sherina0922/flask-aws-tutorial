@@ -11,21 +11,19 @@
 
 <form method="post" action="/index"  id="db_post" name="db_post">
 
-    {{ form1.hidden_tag() }}
+    {{ createUserForm.hidden_tag() }}
 
-    {{ macros.render_field(form1.dbInfo, placeholder='Enter text to submit to the DB', type='dbInfo', label_visible=false) }}
+    {{ macros.render_field(createUserForm.dbInfo, placeholder='Enter text to add user', type='dbInfo', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Submit</button></p></div>
 
 </form>
 
-<hr>
-
 <form method="post" action="/index"  id="db_post" name="db_view">
 
-    {{ form2.hidden_tag() }}
+    {{ getUserInfoForm.hidden_tag() }}
 
-    {{ macros.render_field(form2.userRetrieve, placeholder='Retrieve user info (enter username)', type='userRetrieve', label_visible=false) }}
+    {{ macros.render_field(getUserInfoForm.userRetrieve, placeholder='Retrieve user info (enter username)', type='userRetrieve', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Retrieve</button></p></div>
 
@@ -33,9 +31,9 @@
 
 <form method="post" action="/unregister"  id="db_post" name="db_delete">
 
-    {{ form3.hidden_tag() }}
+    {{ deleteUserForm.hidden_tag() }}
 
-    {{ macros.render_field(form3.userRetrieve, placeholder='Delete user (enter username)', type='userRetrieve', label_visible=false) }}
+    {{ macros.render_field(deleteUserForm.userRetrieve, placeholder='Delete user (enter username)', type='userRetrieve', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Delete</button></p></div>
 
@@ -43,11 +41,55 @@
 
 <form method="post" action="/update"  id="db_post" name="db_update">
 
-    {{ form4.hidden_tag() }}
+    {{ updateUserWeightForm.hidden_tag() }}
 
-    {{ macros.render_field(form4.userInfo, placeholder='Update weight (Eg. username=<string>;weight=<number>)', type='userInfo', label_visible=false) }}
+    {{ macros.render_field(updateUserWeightForm.userInfo, placeholder='Update weight (Eg. username=<string>;weight=<number>)', type='userInfo', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Update Weight</button></p></div>
+
+</form>
+
+<hr>
+<hr>
+
+<!-- recommended recipe -->
+<form method="post" action="/add-history"  id="db_post" name="db_post_recipe">
+
+    {{ createRecipeForm.hidden_tag() }}
+
+    {{ macros.render_field(createRecipeForm.dbInfo, placeholder='Eg. username;recipe_name;recipe_id;date(xx-xx-xx)', type='dbInfo', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Submit</button></p></div>
+
+</form>
+
+<form method="post" action="/view-history"  id="db_post" name="db_view_recipe">
+
+    {{ getUserRecRecipeHistForm.hidden_tag() }}
+
+    {{ macros.render_field(getUserRecRecipeHistForm.userRetrieve, placeholder='Retrieve user recommended recipe history (enter username)', type='userRetrieve', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Retrieve user recipe history</button></p></div>
+
+</form>
+
+<form method="post" action="/delete-history"  id="db_post" name="db_delete_recipe">
+
+    {{ deleteUserRecHistForm.hidden_tag() }}
+
+    {{ macros.render_field(deleteUserRecHistForm.userRetrieve, placeholder='Delete user recommended recipe history (enter username)', type='userRetrieve', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Delete user recipe history</button></p></div>
+
+</form>
+
+<form method="post" action="/update-history"  id="db_post" name="db_update_recipe">
+
+    {{ updateUserRecDateForm.hidden_tag() }}
+
+    {{ macros.render_field(updateUserRecDateForm.userInfo, placeholder='Update date of recommended recipe (Eg. username=<string>;recipename=<string>)', type='userInfo', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Update date of user recipe history</button></p></div>
 
 </form>
 
