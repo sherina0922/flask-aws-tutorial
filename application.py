@@ -7,10 +7,10 @@ Author: Scott Rodkey - rodkeyscott@gmail.com
 Step-by-step tutorial: https://medium.com/@rodkey/deploying-a-flask-application-on-aws-a72daba6bb80
 '''
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash, redirect
 from application import db
 from application.models import User
-from application.forms import EnterDBInfo, RetrieveDBInfo, DeleteDBInfo, UpdateDBInfo
+from application.forms import EnterDBInfo, RetrieveDBInfo, DeleteDBInfo, UpdateUserWeight
 #import logging
 #from sqlachemy.exc import IntegrityError
 
@@ -25,7 +25,8 @@ application.secret_key = 'cC1YCIWOj9GgWspgNEo2'
 def index():
     form1 = EnterDBInfo(request.form)
     form2 = RetrieveDBInfo(request.form)
-    # form3 = DeleteDBInfo(request.form)
+    form3 = DeleteDBInfo(request.form)
+    form4 = UpdateUserWeight(request.form)
 
     if request.method == 'POST' and form1.validate():
         userInfoDict = dict(item.split("=") for item in form1.dbInfo.data.split(";"))
@@ -68,7 +69,35 @@ def index():
     #         db.session.rollback()
     #     return render_template('goodbye.html', username_return=username_return)
 
-    return render_template('index.html', form1=form1, form2=form2)#,form3=form3)
+    return render_template('index.html', form1=form1, form2=form2,form3=form3, form4=form4)
+
+@application.route('/unregister', methods=['POST'])
+def delete_user():
+    form3 = DeleteDBInfo(request.form)
+    if request.method == 'POST' and form3.validate():
+        username_return = form3.userRetrieve.data
+        query_db = User.query.filter_by(username=username_return).one()
+        try:
+            db.session.delete(query_db)
+            db.session.commit()
+            flash('User was deleted.')
+        except:
+            db.session.rollback()
+        return redirect('/')
+
+@application.route('/update', methods=['GET', 'POST'])
+def update_user_weight():
+    form4 = UpdateUserWeight(request.form)
+    if request.method == 'POST' and form4.validate():
+        userInfoDict = dict(item.split("=") for item in form4.userInfo.data.split(";"))
+        query_db = User.query.filter_by(username=userInfoDict.get("username")).one()
+        try:
+            query_db.weight = userInfoDict.get("weight")
+            db.session.commit()
+        except:
+            db.session.rollback()
+        return redirect('/')
+
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0')

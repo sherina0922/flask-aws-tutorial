@@ -41,6 +41,16 @@
 
 </form>
 
+<form method="post" action="/update"  id="db_post" name="db_update">
+
+    {{ form4.hidden_tag() }}
+
+    {{ macros.render_field(form4.userInfo, placeholder='Update weight (Eg. username=<string>;weight=<number>)', type='userInfo', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Update Weight</button></p></div>
+
+</form>
+
 </div>
 
 {% endblock %}

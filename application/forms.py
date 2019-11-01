@@ -10,5 +10,5 @@ class RetrieveDBInfo(Form):
 class DeleteDBInfo(Form):
     userRetrieve = TextField(label='Username of user to delete from system', description="db_delete", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the username of user who\'s information to delete')])
 
-class UpdateDBInfo(Form):
-    userRetrieve = TextField(label='Username of user to update information', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the username of user who\'s information to update and update field: new value')])
+class UpdateUserWeight(Form):
+    userInfo = TextField(label='Username of user to update weight', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the username of user who\'s information to update and update field: new value')])
