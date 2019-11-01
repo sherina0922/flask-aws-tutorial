@@ -34,7 +34,7 @@ class RecommendedRecipe(db.Model):
     recipe_id = db.Column(db.Integer, primary_key=True) #change integer to string for username
     user_id = db.Column(db.String(128), primary_key=True)
     recipe_name = db.Column(db.String(128))
-    date_recommended = db.Date
+    date_recommended = db.Column(db.String(128))
 
     def __init__(self, recipe_id, user_id, recipe_name, date_recommended):
         self.recipe_id = recipe_id

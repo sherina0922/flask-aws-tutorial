@@ -13,10 +13,12 @@
   <thead>
 {% for z in results %}
     <tr>
-      <td>{{z.recipe_name}}</td>
+      <td>Date Recommended: {{z.date_recommended}}</td>
+      <td>Recipe name: {{z.recipe_name}}</td>
+      <td>Recipe id: {{z.recipe_id}}</td>
     </tr>
 {% endfor %}
-  </tbody>
+  <!-- </tbody> -->
 </table>
 
 

@@ -38,6 +38,7 @@ def index():
         try:
             db.session.add(data_entered)
             db.session.commit()
+            db.session.expunge(query_db)
             db.session.close()
         # except IntegrityError as e:
         #     reason = e.message
@@ -57,6 +58,7 @@ def index():
         try:
             username_return = getUserInfoForm.userRetrieve.data
             query_db = User.query.filter_by(username=username_return).one()
+            db.session.expunge(query_db)
             db.session.close()
         except:
             db.session.rollback()
@@ -78,6 +80,7 @@ def delete_user():
             query_db = User.query.filter_by(username=username_return).one()
             db.session.delete(query_db)
             db.session.commit()
+            db.session.close()
         except:
             db.session.rollback()
             return render_template('noresult.html', username_return=username_return)
@@ -92,6 +95,7 @@ def update_user_weight():
             query_db = User.query.filter_by(username=userInfoDict.get("username")).one()
             query_db.weight = userInfoDict.get("weight")
             db.session.commit()
+            db.session.close()
         except:
             db.session.rollback()
         return redirect('/')
@@ -106,10 +110,11 @@ def add_history():
         try:
             db.session.add(data_entered)
             db.session.commit()
+            db.session.expunge(query_db)
             db.session.close()
         except:
             db.session.rollback()
-        return redirect('/')# return render_template()
+        return render_template('recipe-results.html', results=data_entered)
 
 @application.route('/view-history', methods=['GET', 'POST'])
 def view_history():
@@ -119,6 +124,7 @@ def view_history():
         try:
             username_return = getUserRecRecipeHistForm.userRetrieve.data
             query_db = RecommendedRecipe.query.filter_by(user_id=username_return)
+            # db.session.expunge(query_db)
             db.session.close()
         except:
             db.session.rollback()
@@ -130,14 +136,16 @@ def view_history():
 def delete_history():
     deleteUserRecHistForm = DeleteRecRecipeInfo(request.form)
     if request.method == 'POST' and deleteUserRecHistForm.validate():
-        username_return = deleteUserForm.userRetrieve.data
+        username_return = deleteUserRecHistForm.userRetrieve.data
         # query_db = RecommendedRecipe.query.filter_by(user_id=username_return)
+        delete_q = RecommendedRecipe.__table__.delete().where(RecommendedRecipe.user_id == username_return)
         try:
             # db.session.delete(query_db)
+            db.session.execute(delete_q)
             # RecommendedRecipe.delete().where(user_id=username_return)
-            db.session.query(RecommendedRecipe).filter(user_id=username_return).delete(synchronize_session='fetch')
+            # db.session.query(RecommendedRecipe).filter(user_id=username_return).delete(synchronize_session='fetch')
             db.session.commit()
-            flash('User recipe history was deleted.')
+            db.session.close()
         except:
             db.session.rollback()
         return redirect('/')
@@ -146,11 +154,12 @@ def delete_history():
 def update_user_history():
     updateUserRecDateForm = UpdateRecRecipeDate(request.form)
     if request.method == 'POST' and updateUserRecDateForm.validate():
-        userInfoDict = dict(item.split("=") for item in updateUserWeightForm.userInfo.data.split(";"))
+        userInfoDict = dict(item.split("=") for item in updateUserRecDateForm.userInfo.data.split(";"))
         query_db = RecommendedRecipe.query.filter_by(user_id=userInfoDict.get("username"), recipe_id=userInfoDict.get("recipe_id")).one()
         try:
             query_db.date_recommended = userInfoDict.get("date")
             db.session.commit()
+            db.session.close()
         except:
             db.session.rollback()
         return redirect('/')
