@@ -1,23 +1,37 @@
-{% extends "base.html" %} {% import 'macros.html' as macros %} 
+{% extends "base.html" %} {% import 'macros.html' as macros %}
 {% block content %}
 
 <div class="col-md-4 col-md-offset-4">
 
       <div align="center">
-        <h2>Thanks for using the AWS RDS!</h2>
+        <h2>Thanks for using FoodByte! Let's get eating :)</h2>
       </div>
 
 <hr>
 
       <div align="center">
-        <h4>You added this to the database: {{notes}}</h4>
+        <h4>This is the information we have for you:</h4> <!-- {{notes}} = is passed in variable-->
+        <ul style="list-style-type:none">
+         <li>Name: {{name}}</li>
+         <li>Username: {{username}}</li>
+         <li>Password: {{password}}</li>
+         <li>Gender: {{gender}}</li>
+         <li>Budget: {{budget}}</li>
+         <li>Current weight: {{weight}}</li>
+         <li>Weight goal: {{weight_goal}}</li>
+         <li>Average calories burned per day: {{avg_cals_burned}}</li>
+         <li>Location: {{location}}</li>
+         <li>Notes: {{notes}}</li>
+        </ul>
       </div>
 
 <hr>
+
+
 
 <div align="center"
     <p><a href="/"><button type="submit" class="btn btn-primary">Return home</button></p></a>
 </div>
 
 
-{% endblock %}  
+{% endblock %}

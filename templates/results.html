@@ -1,30 +1,29 @@
-{% extends "base.html" %} {% import 'macros.html' as macros %} 
+{% extends "base.html" %} {% import 'macros.html' as macros %}
 {% block content %}
 
 <div class="col-md-4 col-md-offset-4">
 
       <div align="center">
-        <h2>{{num_return}} most recent entries to your AWS RDS:</h2>
+        <h2>Information for: {{username_return}}</h2>
+        <ul style="list-style-type:none">
+         <li>Name: {{results.name}}</li>
+         <li>Username: {{results.username}}</li>
+         <li>Password: {{results.password}}</li>
+         <li>Gender: {{results.gender}}</li>
+         <li>Budget: {{results.budget}}</li>
+         <li>Current weight: {{results.weight}}</li>
+         <li>Weight goal: {{results.weight_goal}}</li>
+         <li>Average calories burned per day: {{results.avg_cals_burned}}</li>
+         <li>Location: {{results.location}}</li>
+         <li>Notes: {{results.notes}}</li>
+        </ul>
       </div>
 
-<hr>
-
-    <table class="table table-striped table-hover">
-  <thead>
-{% for z in results %}
-    <tr>
-      <td>{{z.notes}}</td>
-    </tr>
-{% endfor %}
-  </tbody>
-</table>
-
-
-<hr>
+</div>
 
 <div align="center"
     <p><a href="/"><button type="submit" class="btn btn-primary">Return home</button></p></a>
 </div>
 
 
-{% endblock %}  
+{% endblock %}

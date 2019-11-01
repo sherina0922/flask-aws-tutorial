@@ -9,42 +9,45 @@ Step-by-step tutorial: https://medium.com/@rodkey/deploying-a-flask-application-
 
 from flask import Flask, render_template, request
 from application import db
-from application.models import Data
+from application.models import User
 from application.forms import EnterDBInfo, RetrieveDBInfo
 
 # Elastic Beanstalk initalization
 application = Flask(__name__)
 application.debug=True
 # change this to your own value
-application.secret_key = 'cC1YCIWOj9GgWspgNEo2'   
+application.secret_key = 'cC1YCIWOj9GgWspgNEo2'
 
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
 def index():
-    form1 = EnterDBInfo(request.form) 
-    form2 = RetrieveDBInfo(request.form) 
-    
+    form1 = EnterDBInfo(request.form)
+    form2 = RetrieveDBInfo(request.form)
+
     if request.method == 'POST' and form1.validate():
-        data_entered = Data(notes=form1.dbNotes.data)
-        try:     
+        userInfoDict = dict(item.split("=") for item in form1.dbInfo.data.split(";"))
+        data_entered = User(username=userInfoDict.get("username"), password=userInfoDict.get("password"), name=userInfoDict.get("name"), gender=userInfoDict.get("gender"), budget=userInfoDict.get("budget"), weight=userInfoDict.get("weight"), weight_goal=userInfoDict.get("weight_goal"), avg_cals_burned=userInfoDict.get("avg_cals_burned"), location=userInfoDict.get("location"), notes=userInfoDict.get("notes"))
+        try:
             db.session.add(data_entered)
-            db.session.commit()        
+            db.session.commit()
             db.session.close()
         except:
             db.session.rollback()
-        return render_template('thanks.html', notes=form1.dbNotes.data)
-        
+        return render_template('thanks.html',username = userInfoDict.get("username"), password=userInfoDict.get("password"), name=userInfoDict.get("name"), gender=userInfoDict.get("gender"), budget=userInfoDict.get("budget"), weight=userInfoDict.get("weight"), weight_goal=userInfoDict.get("weight_goal"), avg_cals_burned=userInfoDict.get("avg_cals_burned"), location=userInfoDict.get("location"), notes=userInfoDict.get("notes")) #change this html
+
     if request.method == 'POST' and form2.validate():
-        try:   
-            num_return = int(form2.numRetrieve.data)
-            query_db = Data.query.order_by(Data.id.desc()).limit(num_return)
-            for q in query_db:
-                print(q.notes)
+        query_db = None
+        username_return = form2.userRetrieve.data
+        query_db = User.query.filter_by(username=username_return).one()
+        try:
+            # user_id_return = form2.userRetrieve.data
+            # query_db = Data.query.filter_by(user_id=user_id_return).one()
             db.session.close()
         except:
+            username_return = "failed"
             db.session.rollback()
-        return render_template('results.html', results=query_db, num_return=num_return)                
-    
+        return render_template('results.html', results=query_db, username_return=username_return)
+
     return render_template('index.html', form1=form1, form2=form2)
 
 if __name__ == '__main__':
