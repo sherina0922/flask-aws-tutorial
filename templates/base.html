@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>FoodByte</title>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <link href="http://fonts.googleapis.com/css?family=Abel|Open+Sans:400,600" rel="stylesheet" />
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,42 @@
   <body>
 
     {% block content %} {% endblock %}
+    <div class="jumbotron" ng-if="!hasSession">
+    <h1 class="display-3">foodbyte</h1>
+    <p class="lead">Plan meals, create grocery lists, and manage weight goals all with one simple application.</p>
+    <hr class="m-y-2">
+    <p class="lead">
+      <div class="delivery-address">
+    </div>
+    </p>
+  </div>
 
+  <!-- Carousel -->
+
+  <!--           this can prob be handled with ng-view -->
+
+
+      <div ng-view></div>
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+
+  <!--     load ui bootstraop below agular lib to prevent errors -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.1.3/ui-bootstrap-tpls.min.js"></script>
+
+      <!-- load momentJS (required for angular-moment) -->
+      <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
+
+      <!-- load angular-moment -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-moment/1.0.0-beta.6/angular-moment.min.js"></script>
+
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-route.js"></script>
+
+      <!-- Add your google api key here like  src="https://maps.google.com/maps/api/js?key=YOUR_KEY_HERE"-->
+      <script type="text/javascript" src="https://maps.google.com/maps/api/js?key=AIzaSyB_0BjQATA9lZeZ2d81AAAUiGKRJNs559g"></script>
+      <script src="auth/auth.js"></script>
+      <script src="lists/lists.js"></script>
+      <script src="jobs/jobs.js"></script>
+      <script src="services/services.js"></script>
+      <script src="app.js"></script>
+    </body>
   </body>
 </html>
