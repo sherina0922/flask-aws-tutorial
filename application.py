@@ -25,7 +25,7 @@ client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
 db_mongo = client.mymongodb  # Select the database
 tasks_collection = db_mongo.task  # Select the collection name
 initial_tasks = [task for task in tasks_collection.find()]
-if (len(initial_tasks)) == 2:
+if (len(initial_tasks)) == 0:
     tasks_collection.insert({
         'id': 1,
         'title': u'Buy groceries',
@@ -44,46 +44,6 @@ if (len(initial_tasks)) == 2:
         'description': u'ABDU ALAWINIIIIII',
         'done': False
     })
-
-
-@application.route('/test', methods=['GET'])
-def get_tasks():
-    all_tasks = tasks_collection.find()
-    task_list = []
-    for task in all_tasks:
-        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
-
-    return jsonify({'tasks': task_list})
-
-
-# @application.route('/api/create-task', methods=['GET'])
-# def create_task():
-#     tasks = tasks_collection.find()
-#     new_task = {"id": tasks.count(), "title": "Learn Mongo", "description": "Start with Flask + Mongo", "done": False}
-#     tasks_collection.insert(new_task)
-#     all_tasks = tasks_collection.find()
-#     task_list = []
-#     for task in all_tasks:
-#         task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
-#     return jsonify({'tasks': task_list})
-#
-#
-# @application.route('/api/tasks/<int:task_id>', methods=['GET'])
-# def get_task(task_id):
-#     tasks = tasks_collection.find({'id': task_id})
-#     if tasks.count() == 0:
-#         return jsonify({'task': None})
-#     return jsonify({'task': tasks[0]})
-#
-#
-# @application.route('/', methods=['GET'])
-# def home():
-#     return jsonify({'msg': 'This is the Home'})
-#
-#
-# @application.route('/test', methods=['GET'])
-# def test():
-#     return jsonify({'msg': 'This is a Test'})
 
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
@@ -252,7 +212,25 @@ def update_user_history():
             db.session.rollback()
         return redirect('/')
 
+@application.route('/list_tasks', methods=['GET', 'POST'])
+def get_tasks():
+    all_tasks = tasks_collection.find()
+    task_list = []
+    for task in all_tasks:
+        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
 
+    return jsonify({'tasks': task_list})
+
+@application.route('/add_tasks', methods=['GET', 'POST'])
+def create_task():
+    tasks = tasks_collection.find()
+    new_task = {"id": tasks.count(), "title": "Learn Mongo", "description": "Start with Flask + Mongo", "done": False}
+    tasks_collection.insert(new_task)
+    all_tasks = tasks_collection.find()
+    task_list = []
+    for task in all_tasks:
+        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
+    return jsonify({'tasks': task_list})
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0')
