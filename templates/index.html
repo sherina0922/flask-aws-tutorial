@@ -83,13 +83,23 @@
 
 </form>
 
-<form method="post" action="/update-history"  id="db_post" name="db_update_recipe">
+<form method="post" action="/list_tasks"  id="db_post" name="db_update_recipe">
 
     {{ updateUserRecDateForm.hidden_tag() }}
 
     {{ macros.render_field(updateUserRecDateForm.userInfo, placeholder='Update date of recommended recipe (Eg. username=<string>;recipename=<string>)', type='userInfo', label_visible=false) }}
 
-    <div align="center"><button type="submit" class="btn btn-primary">Update date of user recipe history</button></p></div>
+    <div align="center"><button type="submit" class="btn btn-primary">List all tasks [mongodb test]</button></p></div>
+
+</form>
+
+<form method="post" action="/add_tasks"  id="db_post" name="db_update_recipe">
+
+    {{ updateUserRecDateForm.hidden_tag() }}
+
+    {{ macros.render_field(updateUserRecDateForm.userInfo, placeholder='Update date of recommended recipe (Eg. username=<string>;recipename=<string>)', type='userInfo', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Create new task [mongodb test]</button></p></div>
 
 </form>
 

@@ -12,6 +12,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from application import db
 from application.models import User, RecommendedRecipe
 from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate
+from pymongo import MongoClient
 #import logging
 #from sqlachemy.exc import IntegrityError
 
@@ -20,6 +21,29 @@ application = Flask(__name__)
 application.debug=True
 # change this to your own value
 application.secret_key = 'cC1YCIWOj9GgWspgNEo2'
+client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
+db_mongo = client.mymongodb  # Select the database
+tasks_collection = db_mongo.task  # Select the collection name
+initial_tasks = [task for task in tasks_collection.find()]
+if (len(initial_tasks)) == 0:
+    tasks_collection.insert({
+        'id': 1,
+        'title': u'Buy groceries',
+        'description': u'Milk, Cheese, Pizza, Fruit, Yeet',
+        'done': False
+    })
+    tasks_collection.insert({
+        'id': 2,
+        'title': u'Learn Python',
+        'description': u'Need to find a good Python tutorial on the web',
+        'done': False
+    })
+    tasks_collection.insert({
+        'id': 3,
+        'title': u'GIVE UP ON 411',
+        'description': u'ABDU ALAWINIIIIII',
+        'done': False
+    })
 
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
@@ -188,7 +212,25 @@ def update_user_history():
             db.session.rollback()
         return redirect('/')
 
+@application.route('/list_tasks', methods=['GET', 'POST'])
+def get_tasks():
+    all_tasks = tasks_collection.find()
+    task_list = []
+    for task in all_tasks:
+        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
 
+    return jsonify({'tasks': task_list})
+
+@application.route('/add_tasks', methods=['GET', 'POST'])
+def create_task():
+    tasks = tasks_collection.find()
+    new_task = {"id": tasks.count(), "title": "Learn Mongo", "description": "Start with Flask + Mongo", "done": False}
+    tasks_collection.insert(new_task)
+    all_tasks = tasks_collection.find()
+    task_list = []
+    for task in all_tasks:
+        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
+    return jsonify({'tasks': task_list})
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0')
