@@ -11,7 +11,7 @@ import sqlite3
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from application import db
 from application.models import User, RecommendedRecipe
-from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate
+from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterTaskInfo
 from pymongo import MongoClient
 #import logging
 #from sqlachemy.exc import IntegrityError
@@ -56,6 +56,7 @@ def index():
     getUserRecRecipeHistForm = RetrieveRecRecipeInfo(request.form)
     deleteUserRecHistForm = DeleteRecRecipeInfo(request.form)
     updateUserRecDateForm = UpdateRecRecipeDate(request.form)
+    enterTaskForm = EnterTaskInfo(request.form)
 
     if request.method == 'POST' and createUserForm.validate():
         userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
@@ -91,7 +92,7 @@ def index():
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
     updateUserWeightForm=updateUserWeightForm,createRecipeForm = createRecipeForm,
     getUserRecRecipeHistForm = getUserRecRecipeHistForm, deleteUserRecHistForm = deleteUserRecHistForm,
-    updateUserRecDateForm = updateUserRecDateForm)
+    updateUserRecDateForm = updateUserRecDateForm, enterTaskForm=EnterTaskInfo(request.form))
 
 @application.route('/unregister', methods=['POST'])
 def delete_user():
@@ -212,6 +213,8 @@ def update_user_history():
             db.session.rollback()
         return redirect('/')
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 @application.route('/list_tasks', methods=['GET', 'POST'])
 def get_tasks():
     all_tasks = tasks_collection.find()
@@ -223,14 +226,17 @@ def get_tasks():
 
 @application.route('/add_tasks', methods=['GET', 'POST'])
 def create_task():
-    tasks = tasks_collection.find()
-    new_task = {"id": tasks.count(), "title": "Learn Mongo", "description": "Start with Flask + Mongo", "done": False}
-    tasks_collection.insert(new_task)
-    all_tasks = tasks_collection.find()
-    task_list = []
-    for task in all_tasks:
-        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
-    return jsonify({'tasks': task_list})
+    enterTaskForm = EnterTaskInfo(request.form)
+    if request.method == 'POST' and enterTaskForm.validate():
+        tasks = tasks_collection.find()
+        taskInfoDict = dict(item.split("=") for item in enterTaskForm.taskInfo.data.split(";"))
+        new_task = {"id": tasks.count(), "title": taskInfoDict.get("title"), "description": taskInfoDict.get("description"), "done": False}
+        tasks_collection.insert(new_task)
+        all_tasks = tasks_collection.find()
+        task_list = []
+        for task in all_tasks:
+            task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
+        return jsonify({'tasks': task_list})
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0')

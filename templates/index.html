@@ -106,9 +106,9 @@
 
 <form method="post" action="/add_tasks"  id="db_post" name="db_update_recipe">
 
-    {{ updateUserRecDateForm.hidden_tag() }}
+    {{ enterTaskForm.hidden_tag() }}
 
-    {{ macros.render_field(updateUserRecDateForm.userInfo, placeholder='Update date of recommended recipe (Eg. username=<string>;recipename=<string>)', type='userInfo', label_visible=false) }}
+    {{ macros.render_field(enterTaskForm.taskInfo, placeholder='Id title description', type='userInfo', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Create new task [mongodb test]</button></p></div>
 
