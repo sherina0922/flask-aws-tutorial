@@ -1,0 +1,4 @@
+# Setting the path for Python 3.4
+PATH="/Library/Frameworks/Python.framework/Versions/3.4:${PATH}"
+export PATH
+
