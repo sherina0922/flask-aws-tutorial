@@ -9,11 +9,23 @@
 
 <hr>
 
+<!-- <button onclick="location.href = 'http://0.0.0.0:5000/list_tasks';" id="myButton" class="float-left submit-button" >Home</button> -->
+
+<h5>Register user:</h5>
 <form method="post" action="/index"  id="db_post" name="db_post">
 
     {{ createUserForm.hidden_tag() }}
 
-    {{ macros.render_field(createUserForm.dbInfo, placeholder='Enter text to add user', type='dbInfo', label_visible=false) }}
+    {{ macros.render_field(createUserForm.username, placeholder='Enter username', type='username', label_visible=false) }}
+    {{ macros.render_field(createUserForm.password, placeholder='Enter password', type='password', label_visible=false) }}
+    {{ macros.render_field(createUserForm.name, placeholder='Enter first name', type='name', label_visible=false) }}
+    {{ macros.render_field(createUserForm.gender, placeholder='Enter gender', type='gender', label_visible=false) }}
+    {{ macros.render_field(createUserForm.budget, placeholder='Enter desired budget', type='budget', label_visible=false) }}
+    {{ macros.render_field(createUserForm.weight, placeholder='Enter current weight', type='weight', label_visible=false) }}
+    {{ macros.render_field(createUserForm.weightGoal, placeholder='Enter desired weight goal', type='weightGoal', label_visible=false) }}
+    {{ macros.render_field(createUserForm.avgCalBurned, placeholder='Enter average amount of calories burned in a day', type='avgCalBurned', label_visible=false) }}
+    {{ macros.render_field(createUserForm.location, placeholder='Enter current city', type='location', label_visible=false) }}
+    {{ macros.render_field(createUserForm.notes, placeholder='Enter any additional tidbit notes', type='notes', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Submit</button></p></div>
 
@@ -43,7 +55,8 @@
 
     {{ updateUserWeightForm.hidden_tag() }}
 
-    {{ macros.render_field(updateUserWeightForm.userInfo, placeholder='Update weight (Eg. username=<string>;weight=<number>)', type='userInfo', label_visible=false) }}
+    {{ macros.render_field(updateUserWeightForm.username, placeholder='Enter username', type='username', label_visible=false) }}
+    {{ macros.render_field(updateUserWeightForm.newWeight, placeholder='Enter new current weight', type='newWeight', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Update Weight</button></p></div>
 
@@ -53,11 +66,16 @@
 <hr>
 
 <!-- recommended recipe -->
+
+<!-- username=gracesc2;recipe_id=1001;recipe_name=green tea cake;date=00-00-00 -->
 <form method="post" action="/add-history"  id="db_post" name="db_post_recipe">
 
     {{ createRecipeForm.hidden_tag() }}
-
-    {{ macros.render_field(createRecipeForm.dbInfo, placeholder='Eg. username;recipe_name;recipe_id;date(xx-xx-xx)', type='dbInfo', label_visible=false) }}
+ 
+    {{ macros.render_field(createRecipeForm.username, placeholder='Enter username', type='username', label_visible=false) }}
+    {{ macros.render_field(createRecipeForm.recipeId, placeholder='Enter recipe id', type='recipeId', label_visible=false) }}
+    {{ macros.render_field(createRecipeForm.recipeName, placeholder='Enter recipe name', type='recipeName', label_visible=false) }}
+    {{ macros.render_field(createRecipeForm.date, placeholder='Enter date', type='date', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Submit</button></p></div>
 

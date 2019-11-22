@@ -59,8 +59,8 @@ def index():
     enterTaskForm = EnterTaskInfo(request.form)
 
     if request.method == 'POST' and createUserForm.validate():
-        userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
-        data_entered = User(username=userInfoDict.get("username"), password=userInfoDict.get("password"), name=userInfoDict.get("name"), gender=userInfoDict.get("gender"), budget=userInfoDict.get("budget"), weight=userInfoDict.get("weight"), weight_goal=userInfoDict.get("weight_goal"), avg_cals_burned=userInfoDict.get("avg_cals_burned"), location=userInfoDict.get("location"), notes=userInfoDict.get("notes"))
+        #userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
+        data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data, name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data, weight=createUserForm.weight.data, weight_goal=createUserForm.weightGoal.data, avg_cals_burned=createUserForm.avgCalBurned.data, location=createUserForm.location.data, notes=createUserForm.notes.data)
         try:
             db.session.add(data_entered)
             db.session.commit()
@@ -68,12 +68,12 @@ def index():
             db.session.close()
         except:
             db.session.rollback()
-        return render_template('thanks.html',username = userInfoDict.get("username"),
-        password=userInfoDict.get("password"), name=userInfoDict.get("name"),
-        gender=userInfoDict.get("gender"), budget=userInfoDict.get("budget"),
-        weight=userInfoDict.get("weight"), weight_goal=userInfoDict.get("weight_goal"),
-        avg_cals_burned=userInfoDict.get("avg_cals_burned"),
-        location=userInfoDict.get("location"), notes=userInfoDict.get("notes"))
+        return render_template('thanks.html',username = createUserForm.username.data,
+        password=createUserForm.password.data, name=createUserForm.name.data,
+        gender=createUserForm.gender.data, budget=createUserForm.budget.data,
+        weight=createUserForm.weight.data, weight_goal=createUserForm.weightGoal.data,
+        avg_cals_burned=createUserForm.avgCalBurned.data,
+        location=createUserForm.location.data, notes=createUserForm.notes.data)
         #change this html
 
     if request.method == 'POST' and getUserInfoForm.validate():
@@ -117,9 +117,11 @@ def update_user_weight():
     updateUserWeightForm = UpdateUserWeight(request.form)
     if request.method == 'POST' and updateUserWeightForm.validate():
         try:
-            userInfoDict = dict(item.split("=") for item in updateUserWeightForm.userInfo.data.split(";"))
-            query_db = User.query.filter_by(username=userInfoDict.get("username")).one()
-            query_db.weight = userInfoDict.get("weight")
+            # userInfoDict = dict(item.split("=") for item in updateUserWeightForm.userInfo.data.split(";"))
+            # query_db = User.query.filter_by(username=userInfoDict.get("username")).one()
+            # query_db.weight = userInfoDict.get("weight")
+            query_db = User.query.filter_by(username=updateUserWeightForm.username.data).one()
+            query_db.weight = updateUserWeightForm.newWeight.data
             db.session.commit()
             db.session.close()
         except:
@@ -131,27 +133,27 @@ def update_user_weight():
 def add_history():
     createRecipeForm = EnterRecRecipeInfo(request.form)
     if request.method == 'POST' and createRecipeForm.validate():
-        userInfoDict = dict(item.split("=") for item in createRecipeForm.dbInfo.data.split(";"))
-        data_entered = RecommendedRecipe(user_id=userInfoDict.get("username"), recipe_id=userInfoDict.get("recipe_id"), recipe_name=userInfoDict.get("recipe_name"), date_recommended=userInfoDict.get("date"))
+        # userInfoDict = dict(item.split("=") for item in createRecipeForm.dbInfo.data.split(";"))
+        data_entered = RecommendedRecipe(user_id=createRecipeForm.username.data, recipe_id=createRecipeForm.recipeId.data, recipe_name=createRecipeForm.recipeName.data, date_recommended=createRecipeForm.date.data)
         try:
             with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
-                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))",(userInfoDict.get("username"), userInfoDict.get("recipe_id"),userInfoDict.get("recipe_name"), userInfoDict.get("date")))
-                result_arr = []
-                for item in query_db:
-                    recipe_dict = {}
-                    recipe_dict["user_id"] = item[0]
-                    recipe_dict["recipe_id"] = item[1]
-                    recipe_dict["recipe_name"] = item[2]
-                    recipe_dict["date_recommended"] = item[3]
-                    result_arr.append(user_dict)
+                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))",createRecipeForm.username.data, createRecipeForm,recipeId, createRecipeForm.recipeName.data, createRecipeForm.date.data)
+                # result_arr = []
+                # for item in query_db:
+                #     recipe_dict = {}
+                #     recipe_dict["user_id"] = item[0]
+                #     recipe_dict["recipe_id"] = item[1]
+                #     recipe_dict["recipe_name"] = item[2]
+                #     recipe_dict["date_recommended"] = item[3]
+                #     result_arr.append(user_dict)
             db.session.add(data_entered)
             db.session.commit()
             db.session.expunge(query_db)
             db.session.close()
         except sqlite3.IntegrityError:
             db.session.rollback()
-            return render_template('recipe-insert-fail.html', user_id=userInfoDict.get("username"), recipe_id=userInfoDict.get("recipe_id"))
+            return render_template('recipe-insert-fail.html', user_id=createRecipeForm.userId.data, recipe_id=createRecipeForm.recipeId.data)
         except:
             db.session.rollback()
         return render_template('recipe-results.html', results=data_entered)
