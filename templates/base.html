@@ -12,13 +12,13 @@
         <img src="{{url_for('static', filename='foodbytelogo.png')}}" />
       </div>
       <div class="top-nav-left">
-        <span><a button onclick="location.href = 'http://0.0.0.0:5000/list_tasks';" class="btn btn-primary btn-lg active top-nav-button"> My Lists</a></span>
-        <span><a href='#/alllists' class="btn btn-primary btn-lg active top-nav-button">All Lists</a></span>
-        <span><a href='#/myjobs' class="btn btn-primary btn-lg active top-nav-button">My Jobs</a></span>
+        <span><a button onclick="location.href = 'http://0.0.0.0:5000/get_forms';" class="btn btn-primary btn-lg active top-nav-button"> My Lists</a></span>
+        <span><a button onclick="location.href = 'http://0.0.0.0:5000/get_forms';" class="btn btn-primary btn-lg active top-nav-button">History</a></span>
+        <span><a href='#/myjobs' class="btn btn-primary btn-lg active top-nav-button">Recommendations [LATER]</a></span>
       </div>
       <div class="top-nav-right" ng-if="hasSession">
         <span>
-          <a ng-click="signout()" href='#/logout' class="btn pull-right btn-primary btn-default active">Log Out</a>
+          <a a button onclick="location.href = 'http://0.0.0.0:5000/get_forms';"  class="btn pull-right btn-primary btn-default active">Log Out</a>
         </span>
       </div>
     </div>
@@ -31,10 +31,6 @@
     <div class="delivery-address">
     <uib-accordion>
       <div uib-accordion-group class="panel-default" is-open="status.open">
-        <uib-accordion-heading>
-          <a class="btn btn-primary btn-sm" href="#" role="button">Learn more</a>
-          <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': status.open, 'glyphicon-chevron-right': !status.open}"></i>
-        </uib-accordion-heading>
           <div>
             <p>FoodByte is an easy way to stay on top of your health and budget while trying new and exciting recipes.</p>
             <p>Join the byte and make healthy eating a "bit" more accessible.</p>
