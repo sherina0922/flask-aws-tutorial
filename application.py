@@ -10,7 +10,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from application import db
 from application.models import User, RecommendedRecipe
 from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterTaskInfo
-from pymongo import MongoClient
+# from pymongo import MongoClient
 #import logging
 #from sqlachemy.exc import IntegrityError
 
@@ -19,33 +19,33 @@ application = Flask(__name__)
 application.debug=True
 # change this to your own value
 application.secret_key = 'cC1YCIWOj9GgWspgNEo2'
-client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
-db_mongo = client.mymongodb  # Select the database
-tasks_collection = db_mongo.task  # Select the collection name
-initial_tasks = [task for task in tasks_collection.find()]
-if (len(initial_tasks)) == 0:
-    tasks_collection.insert({
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Yeet',
-        'done': False
-    })
-    tasks_collection.insert({
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web',
-        'done': False
-    })
-    tasks_collection.insert({
-        'id': 3,
-        'title': u'GIVE UP ON 411',
-        'description': u'ABDU ALAWINIIIIII',
-        'done': False
-    })
+# client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
+# db_mongo = client.mymongodb  # Select the database
+# tasks_collection = db_mongo.task  # Select the collection name
+# initial_tasks = [task for task in tasks_collection.find()]
+# if (len(initial_tasks)) == 0:
+#     tasks_collection.insert({
+#         'id': 1,
+#         'title': u'Buy groceries',
+#         'description': u'Milk, Cheese, Pizza, Fruit, Yeet',
+#         'done': False
+#     })
+#     tasks_collection.insert({
+#         'id': 2,
+#         'title': u'Learn Python',
+#         'description': u'Need to find a good Python tutorial on the web',
+#         'done': False
+#     })
+#     tasks_collection.insert({
+#         'id': 3,
+#         'title': u'GIVE UP ON 411',
+#         'description': u'ABDU ALAWINIIIIII',
+#         'done': False
+#     })
 
-@application.route('/', methods=['GET', 'POST'])
-@application.route('/index', methods=['GET', 'POST'])
-def index():
+@application.route('/new', methods=['GET', 'POST'])
+@application.route('/new_index', methods=['GET', 'POST'])
+def new_index():
     createUserForm = EnterUserInfo(request.form)
     getUserInfoForm = RetrieveUserInfo(request.form)
     deleteUserForm = DeleteUserInfo(request.form)
@@ -86,7 +86,8 @@ def index():
             return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
-    return render_template('index.html', createUserForm=createUserForm,
+    # return redirect('/new')
+    return render_template('new_index.html', createUserForm=createUserForm,
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
     updateUserWeightForm=updateUserWeightForm,createRecipeForm = createRecipeForm,
     getUserRecRecipeHistForm = getUserRecRecipeHistForm, deleteUserRecHistForm = deleteUserRecHistForm,
@@ -215,32 +216,32 @@ def update_user_history():
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-@application.route('/list_tasks', methods=['GET', 'POST'])
-def get_tasks():
-    all_tasks = tasks_collection.find()
-    task_list = []
-    for task in all_tasks:
-        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
+# @application.route('/list_tasks', methods=['GET', 'POST'])
+# def get_tasks():
+#     all_tasks = tasks_collection.find()
+#     task_list = []
+#     for task in all_tasks:
+#         task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
 
-    return jsonify({'tasks': task_list})
+#     return jsonify({'tasks': task_list})
 
-@application.route('/add_tasks', methods=['GET', 'POST'])
-def create_task():
-    enterTaskForm = EnterTaskInfo(request.form)
-    if request.method == 'POST' and enterTaskForm.validate():
-        tasks = tasks_collection.find()
-        taskInfoDict = dict(item.split("=") for item in enterTaskForm.taskInfo.data.split(";"))
-        new_task = {"id": tasks.count(), "title": taskInfoDict.get("title"), "description": taskInfoDict.get("description"), "done": False}
-        tasks_collection.insert(new_task)
-        all_tasks = tasks_collection.find()
-        task_list = []
-        for task in all_tasks:
-            task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
-        return jsonify({'tasks': task_list})
+# @application.route('/add_tasks', methods=['GET', 'POST'])
+# def create_task():
+#     enterTaskForm = EnterTaskInfo(request.form)
+#     if request.method == 'POST' and enterTaskForm.validate():
+#         tasks = tasks_collection.find()
+#         taskInfoDict = dict(item.split("=") for item in enterTaskForm.taskInfo.data.split(";"))
+#         new_task = {"id": tasks.count(), "title": taskInfoDict.get("title"), "description": taskInfoDict.get("description"), "done": False}
+#         tasks_collection.insert(new_task)
+#         all_tasks = tasks_collection.find()
+#         task_list = []
+#         for task in all_tasks:
+#             task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
+#         return jsonify({'tasks': task_list})
 
-@application.route('/new', methods=['GET', 'POST'])
-@application.route('/new_index', methods=['GET', 'POST'])
-def new_index():
+@application.route('/', methods=['GET', 'POST'])
+@application.route('/index', methods=['GET', 'POST'])
+def index():
     createUserForm = EnterUserInfo(request.form)
     getUserInfoForm = RetrieveUserInfo(request.form)
     deleteUserForm = DeleteUserInfo(request.form)
@@ -281,7 +282,7 @@ def new_index():
             return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
-    return render_template('new_index.html', createUserForm=createUserForm,
+    return render_template('index.html', createUserForm=createUserForm,
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
     updateUserWeightForm=updateUserWeightForm,createRecipeForm = createRecipeForm,
     getUserRecRecipeHistForm = getUserRecRecipeHistForm, deleteUserRecHistForm = deleteUserRecHistForm,
@@ -289,7 +290,7 @@ def new_index():
 
 @application.route('/get_forms', methods=['GET', 'POST'])
 def get_all_forms():
-    return redirect('/new')
+    return redirect('/')
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0')
