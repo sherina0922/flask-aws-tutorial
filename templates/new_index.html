@@ -9,7 +9,7 @@
 
 <hr>
 
-<!-- <button onclick="location.href = 'http://0.0.0.0:5000/list_tasks';" id="myButton" class="float-left submit-button" >Home</button> -->
+<!-- <button onclick="location.href = 'http://0.0.0.0:5000/list_recipes';" id="myButton" class="float-left submit-button" >Home</button> -->
 
 <h5>Register user:</h5>
 <form method="post" action="/index"  id="db_post" name="db_post">
@@ -112,23 +112,23 @@
 
 </form>
 
-<form method="post" action="/list_tasks"  id="db_post" name="db_update_recipe">
+<form method="post" action="/list_recipes
 
     {{ updateUserRecDateForm.hidden_tag() }}
 
     <!-- {{ macros.render_field(updateUserRecDateForm.userInfo, placeholder='Update date of recommended recipe (Eg. username=<string>;recipename=<string>)', type='userInfo', label_visible=false) }} -->
 
-    <div align="center"><button type="submit" class="btn btn-primary">List all tasks [mongodb test]</button></p></div>
+    <div align="center"><button type="submit" class="btn btn-primary">List all recipes [mongodb test]</button></p></div>
 
 </form>
 
-<form method="post" action="/add_tasks"  id="db_post" name="db_update_recipe">
+<form method="post" action="/add_recipes"  id="db_post" name="db_update_recipe">
 
-    {{ enterTaskForm.hidden_tag() }}
+    {{ enterRecipeForm.hidden_tag() }}
 
-    {{ macros.render_field(enterTaskForm.taskInfo, placeholder='Id title description', type='userInfo', label_visible=false) }}
+    {{ macros.render_field(enterRecipeForm.recipeInfo, placeholder='Id title description', type='userInfo', label_visible=false) }}
 
-    <div align="center"><button type="submit" class="btn btn-primary">Create new task [mongodb test]</button></p></div>
+    <div align="center"><button type="submit" class="btn btn-primary">Create new recipe [mongodb test]</button></p></div>
 
 </form>
 

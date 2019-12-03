@@ -38,5 +38,5 @@ class DeleteRecRecipeInfo(Form):
 class UpdateRecRecipeDate(Form):
     userInfo = TextField(label='Username and recipe id to change recipe date', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the username of user and the recipe id to update and update date recommended')])
 
-class EnterTaskInfo(Form):
-    taskInfo = TextField(label='Title and description of the task', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the title and description of task')])
+class EnterRecipeInfo(Form):
+    recipeInfo = TextField(label='Title and description of the recipe', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the title and description of recipe')])
