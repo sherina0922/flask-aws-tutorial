@@ -9,39 +9,104 @@ import sqlite3
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from application import db
 from application.models import User, RecommendedRecipe
-from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterTaskInfo
+from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterRecipeInfo
 from pymongo import MongoClient
-#import logging
-#from sqlachemy.exc import IntegrityError
+import scrape_schema_recipe
+
 
 # Elastic Beanstalk initalization
 application = Flask(__name__)
 application.debug=True
 # change this to your own value
 application.secret_key = 'cC1YCIWOj9GgWspgNEo2'
-client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
-db_mongo = client.mymongodb  # Select the database
-tasks_collection = db_mongo.task  # Select the collection name
-initial_tasks = [task for task in tasks_collection.find()]
-if (len(initial_tasks)) == 0:
-    tasks_collection.insert({
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Yeet',
-        'done': False
-    })
-    tasks_collection.insert({
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web',
-        'done': False
-    })
-    tasks_collection.insert({
-        'id': 3,
-        'title': u'GIVE UP ON 411',
-        'description': u'ABDU ALAWINIIIIII',
-        'done': False
-    })
+
+def store_data(mongo_update_lst, recipe_db):
+    '''
+    Store Recipe Information in MongoDB
+    '''
+    for json_dct in mongo_update_lst:
+        #print(json_dct)
+        recipe_db.insert_one(json_dct)
+    pass
+
+def scrape_search(list_link):
+    '''
+    Input:  (1) link to search page
+            (2) recipe MongoDB
+    Output: (1) list of data to be stored in MongoDB
+    '''
+
+    #Parse url string to locate recipe name and number
+
+    mongo_update_lst = []
+    for recipe_url in list_link:
+        r = None
+        try:
+            r = scrape_schema_recipe.scrape_url(recipe_url, python_objects=True)
+        except:
+            print('Could not scrape URL {}'.format(recipe_url))
+        mongo_update_lst.append(r[0])
+    return mongo_update_lst
+
+def read_mongo(collection, query={}):
+    """ Read from Mongo and Store into DataFrame """
+
+    # Connect to MongoDB
+    cursor = collection.find()
+    recipe_list = []
+    for obj in cursor:
+        recipe_list.append(obj)
+
+    return recipe_list
+
+# Test function for scrape_schema_recipe
+def get_recipe(url):
+    try:
+        recipe_list = scrape_schema_recipe.scrape_url(url, python_objects=True)
+    except:
+        print('Could not scrape URL {}'.format(url))
+        return {}
+
+    recipe = recipe_list[0]
+    try:
+        name = recipe['name']
+        print(name)
+    except AttributeError:
+        name = None
+
+    try:
+        ingredients = recipe['recipeIngredient']
+    except AttributeError:
+        ingredients = None
+
+    try:
+        instructions = recipe['recipeInstructions']
+    except AttributeError:
+        instructions = None
+
+    try:
+        author = recipe['author']
+    except AttributeError:
+        author = None
+
+    try:
+        prepTime = recipe['prepTime']
+    except KeyError:
+        prepTime = None
+
+    try:
+        calories = recipe['nutrition']['properties']['calories']
+    except AttributeError:
+        calories = None
+
+    return {
+        'name': name,
+        'ingredients': ingredients,
+        'instructions': instructions,
+        'prepTime': prepTime,
+        'calories': calories,
+        'author': author,
+    }
 
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
@@ -54,7 +119,7 @@ def index():
     getUserRecRecipeHistForm = RetrieveRecRecipeInfo(request.form)
     deleteUserRecHistForm = DeleteRecRecipeInfo(request.form)
     updateUserRecDateForm = UpdateRecRecipeDate(request.form)
-    enterTaskForm = EnterTaskInfo(request.form)
+    enterRecipeForm = EnterRecipeInfo(request.form)
 
     if request.method == 'POST' and createUserForm.validate():
         #userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
@@ -90,7 +155,7 @@ def index():
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
     updateUserWeightForm=updateUserWeightForm,createRecipeForm = createRecipeForm,
     getUserRecRecipeHistForm = getUserRecRecipeHistForm, deleteUserRecHistForm = deleteUserRecHistForm,
-    updateUserRecDateForm = updateUserRecDateForm, enterTaskForm=EnterTaskInfo(request.form))
+    updateUserRecDateForm = updateUserRecDateForm, enterRecipeForm=EnterRecipeInfo(request.form))
 
 @application.route('/unregister', methods=['POST'])
 def delete_user():
@@ -215,15 +280,17 @@ def update_user_history():
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-@application.route('/list_tasks', methods=['GET', 'POST'])
-def get_tasks():
-    all_tasks = tasks_collection.find()
-    task_list = []
-    for task in all_tasks:
-        task_list.append({'title': task['title'], 'description': task['description'], 'id': task['id']})
+@application.route('/list_recipes', methods=['GET', 'POST'])
+def get_recipes():
+    # all_recipes = recipe_db.find()
+    # recipes_list = []
+    # for recipe in all_recipes:
+    #     recipes_list.append({'title': recipe['title'], 'description': recipe['description'], 'id': recipe['id']})
+    recipes_list = read_mongo(recipe_db)
 
-    return jsonify({'tasks': task_list})
+    return jsonify({'recipes': recipes_list})
 
+# not sure what this is for
 @application.route('/add_tasks', methods=['GET', 'POST'])
 def create_task():
     enterTaskForm = EnterTaskInfo(request.form)
@@ -292,4 +359,15 @@ def get_all_forms():
     return redirect('/new')
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0')
+    # Test for mongo and set up for collection/etc
+    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550', 'http://www.epicurious.com/recipes/food/views/chocolate-marble-cheesecake-241488', 'http://www.epicurious.com/recipes/food/views/hazelnut-dome-cake-4246']
+    db_client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
+    db = db_client.allrecipes
+    recipe_db = db.recipe_data
+    mongo_data = scrape_search(list_links)
+    x = recipe_db.delete_many({})
+    store_data(mongo_data, recipe_db)
+    mongo_retrieve = read_mongo(recipe_db)
+    for recipe in mongo_retrieve:
+        print(recipe['name'])
+    application.run(host='localhost')
