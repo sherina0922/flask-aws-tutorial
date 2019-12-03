@@ -9,11 +9,13 @@ import sqlite3
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from application import db
 from application.models import User, RecommendedRecipe
-from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterRecipeInfo
+from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterRecipeInfo, GetRecRecipe
 from pymongo import MongoClient
 import scrape_schema_recipe
 import json
 from bson import ObjectId
+from pandas.io.json import json_normalize
+import numpy as np
 
 # Elastic Beanstalk initalization
 application = Flask(__name__)
@@ -121,7 +123,7 @@ def delete_user():
     if request.method == 'POST' and deleteUserForm.validate():
         username_return = deleteUserForm.userRetrieve.data
         try:
-            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
                 query_db = cur.execute("DELETE FROM users WHERE username=(?)",[username_return])
                 con.commit()
@@ -157,7 +159,7 @@ def add_history():
         # userInfoDict = dict(item.split("=") for item in createRecipeForm.dbInfo.data.split(";"))
         data_entered = RecommendedRecipe(user_id=createRecipeForm.username.data, recipe_id=createRecipeForm.recipeId.data, recipe_name=createRecipeForm.recipeName.data, date_recommended=createRecipeForm.date.data)
         try:
-            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
                 query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))",createRecipeForm.username.data, createRecipeForm,recipeId, createRecipeForm.recipeName.data, createRecipeForm.date.data)
                 # result_arr = []
@@ -186,7 +188,7 @@ def view_history():
         query_db = None
         try:
             username_return = getUserRecRecipeHistForm.userRetrieve.data
-            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
                 query_db = cur.execute("SELECT * FROM recommendedrecipes WHERE user_id=(?)",[username_return])
                 result_arr = []
@@ -209,7 +211,7 @@ def delete_history():
     if request.method == 'POST' and deleteUserRecHistForm.validate():
         username_return = deleteUserRecHistForm.userRetrieve.data
         try:
-            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
                 query_db = cur.execute("DELETE FROM recommendedrecipes WHERE user_id=(?)", [username_return])
                 con.commit()
@@ -227,7 +229,7 @@ def update_user_history():
     if request.method == 'POST' and updateUserRecDateForm.validate():
         userInfoDict = dict(item.split("=") for item in updateUserRecDateForm.userInfo.data.split(";"))
         try:
-            with sqlite3.connect("/Users/sherinahung/Downloads/flask-aws-tutorial/application/test.db") as con:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
                 query_db = cur.execute("UPDATE recommendedrecipes SET date_recommended=(?) WHERE user_id=(?) AND recipe_id=(?)",(userInfoDict.get("date"), userInfoDict.get("username"), userInfoDict.get("recipe_id")))
             db.session.commit()
@@ -243,20 +245,64 @@ def get_recipes():
     recipes_list = read_mongo(recipe_db)
     return JSONEncoder().encode(recipes_list)
 
+def recommend_recipes(user_cals):
+    all_recipes = read_mongo(recipe_db)
+    recipe_list = []
+    total_cals = 0
+    for recipe in all_recipes:
+        print(recipe)
+        recipe_cals = recipe['nutrition']['properties']['calories'].split()
+        if (total_cals + int(recipe_cals[0])) <= user_cals:
+            recipe_list.append(get_recipe_info(recipe))
+            total_cals += int(recipe_cals[0]) 
+    # return jsonify({'recipes': recipe_list})
+    # df = json_normalize({'recipes': recipe_list})
+    # parsed = json.loads({'recipes': recipe_list})
+    # return pandas.read_json(parsed)
+    return jsonify({'recipes': recipe_list})
+    # return json.dumps(parsed, indent=2, sort_keys=True)
+    # return np.var(df.values)
 
-# # not sure what this is for
-# @application.route('/add_recipes', methods=['GET', 'POST'])
-# def create_recipe():
-#     enterRecipeForm = EnterRecipeInfo(request.form)
-#     if request.method == 'POST' and enterRecipeForm.validate():
-#         all_recipes = read_mongo(recipe_db)
-#         recipe_list = []
-#         for recipe in all_recipes:
-#             recipe_cals = recipe['nutrition']['properties']['calories']
-#             if total_cals += recipe_cals <= user_cals:
-#
-#             recipe_list.append({'title': recipe['title'], 'description': recipe['description'], 'id': recipe['id']})
-#         return jsonify({'recipes': recipe_list})
+
+def get_recipe_info(recipe):
+    try:
+        name = recipe['name']
+        print(name)
+    except AttributeError:
+        name = None
+
+    try:
+        ingredients = recipe['recipeIngredient']
+    except AttributeError:
+        ingredients = None
+
+    try:
+        instructions = recipe['recipeInstructions']
+    except AttributeError:
+        instructions = None
+
+    # try:
+    #     author = recipe['author']
+    # except AttributeError:
+    #     author = None
+
+    try:
+        prepTime = recipe['prepTime']
+    except KeyError:
+        prepTime = None
+
+    try:
+        calories = recipe['nutrition']['properties']['calories']
+    except AttributeError:
+        calories = None
+
+    return {
+        'name': name,
+        'ingredients': ingredients,
+        'instructions': instructions,
+        'prepTime': prepTime,
+        'calories': calories,
+    }
 
 @application.route('/', methods=['GET', 'POST'])
 @application.route('/index', methods=['GET', 'POST'])
@@ -311,9 +357,51 @@ def index():
 def get_all_forms():
     return redirect('/')
 
+@application.route('/get_recommendations', methods=['GET', 'POST'])
+def get_recommendations():
+    getRecRecipeForm = GetRecRecipe(request.form)
+    return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
+
+@application.route('/view-recommendations', methods=['GET', 'POST'])
+def check_user_for_recommendations():
+    getRecRecipeForm = GetRecRecipe(request.form)
+    if request.method == 'POST' and getRecRecipeForm.validate():
+        result_arr = []
+        username_return = getRecRecipeForm.userRetrieve.data
+            #check that username exists in database -> forward to recommendation system
+        try:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+                for item in query_db:
+                    user_dict = {}
+                    user_dict["name"] = item[0]
+                    user_dict["username"] = item[1]
+                    user_dict["password"] = item[2]
+                    user_dict["gender"] = item[3]
+                    user_dict["budget"] = item[4]
+                    user_dict["weight"] = item[5]
+                    user_dict["weight_goal"] = item[6]
+                    user_dict["avg_cals_burned"] = item[7]
+                    user_dict["location"] = item[8]
+                    user_dict["notes"] = item[9]
+                    result_arr.append(user_dict)
+                #query_db = cur.execute("DELETE FROM recommendedrecipes WHERE user_id=(?)", [username_return])
+                #check that username exists in database -> forward to recommendation system
+            cur.close()
+            db.session.close()
+        except:
+            db.session.rollback()
+        # return redirect('/')
+        print(result_arr)
+        # recipes_list = read_mongo(recipe_db)
+        # return JSONEncoder().encode(recipes_list)
+        return recommend_recipes(result_arr[0]["weight"])
+    # return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
+
 if __name__ == '__main__':
     # Test for mongo and set up for collection/etc
-    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550', 'http://www.epicurious.com/recipes/food/views/chocolate-marble-cheesecake-241488', 'http://www.epicurious.com/recipes/food/views/hazelnut-dome-cake-4246']
+    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
     db_client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
     db_mongo = db_client.allrecipes
     recipe_db = db_mongo.recipe_data
@@ -322,5 +410,5 @@ if __name__ == '__main__':
     store_data(mongo_data, recipe_db)
     mongo_retrieve = read_mongo(recipe_db)
     for recipe in mongo_retrieve:
-        print(recipe['name'])
+        print(recipe['nutrition']['properties']['calories'])
     application.run(host='0.0.0.0')

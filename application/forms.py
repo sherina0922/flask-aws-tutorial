@@ -40,3 +40,6 @@ class UpdateRecRecipeDate(Form):
 
 class EnterRecipeInfo(Form):
     recipeInfo = TextField(label='Title and description of the recipe', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the title and description of recipe')])
+
+class GetRecRecipe(Form):
+    userRetrieve = TextField(label='Username of user to recommend recipes for', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of the user to recommend recipes for')])

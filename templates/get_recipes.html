@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% import 'macros.html' as macros %}
+{% block content %}
+
+<div class="col-md-4 col-md-offset-4">
+  <div align="center">
+      <form method="post" action="/view-recommendations"  id="db_post" name="db_view_recipe">
+        {{ getRecRecipeForm.hidden_tag() }}
+        {{ macros.render_field(getRecRecipeForm.userRetrieve, placeholder='Get recipes (enter username)', type='userRetrieve', label_visible=false) }}
+        <div align="center"><button type="submit" class="btn btn-primary">Get recipes!</button></p></div>
+      </form>
+    </div>
+</div>
+
+
+
+
+{% endblock %}
