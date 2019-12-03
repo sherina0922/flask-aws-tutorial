@@ -21,11 +21,9 @@
     {{ macros.render_field(createUserForm.name, placeholder='Enter first name', type='name', label_visible=false) }}
     {{ macros.render_field(createUserForm.gender, placeholder='Enter gender', type='gender', label_visible=false) }}
     {{ macros.render_field(createUserForm.budget, placeholder='Enter desired budget', type='budget', label_visible=false) }}
-    {{ macros.render_field(createUserForm.weight, placeholder='Enter current weight', type='weight', label_visible=false) }}
-    {{ macros.render_field(createUserForm.weightGoal, placeholder='Enter desired weight goal', type='weightGoal', label_visible=false) }}
+    {{ macros.render_field(createUserForm.calories, placeholder='Enter desired calories', type='calories', label_visible=false) }}
     {{ macros.render_field(createUserForm.avgCalBurned, placeholder='Enter average amount of calories burned in a day', type='avgCalBurned', label_visible=false) }}
     {{ macros.render_field(createUserForm.location, placeholder='Enter current city', type='location', label_visible=false) }}
-    {{ macros.render_field(createUserForm.notes, placeholder='Enter any additional tidbit notes', type='notes', label_visible=false) }}
 
     <div align="center"><button type="submit" class="btn btn-primary">Submit</button></p></div>
 
@@ -53,12 +51,12 @@
 
 <form method="post" action="/update"  id="db_post" name="db_update">
 
-    {{ updateUserWeightForm.hidden_tag() }}
+    {{ updateUserCaloriesForm.hidden_tag() }}
 
-    {{ macros.render_field(updateUserWeightForm.username, placeholder='Enter username', type='username', label_visible=false) }}
-    {{ macros.render_field(updateUserWeightForm.newWeight, placeholder='Enter new current weight', type='newWeight', label_visible=false) }}
+    {{ macros.render_field(updateUserCaloriesForm.username, placeholder='Enter username', type='username', label_visible=false) }}
+    {{ macros.render_field(updateUserCaloriesForm.newCalories, placeholder='Enter new desired calories', type='newCalories', label_visible=false) }}
 
-    <div align="center"><button type="submit" class="btn btn-primary">Update Weight</button></p></div>
+    <div align="center"><button type="submit" class="btn btn-primary">Update Calories</button></p></div>
 
 </form>
 

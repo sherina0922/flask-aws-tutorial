@@ -7,11 +7,9 @@ class EnterUserInfo(Form):
     name = TextField(label='Enter first name', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter 128 characters or less')])
     gender = TextField(label='Enter gender', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1, message=u'Enter 1 character or less')])
     budget = TextField(label='Enter desired budget', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter 1024 characters or less')])
-    weight = TextField(label='Enter current weight', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter 1024 characters or less')])
-    weightGoal = TextField(label='Enter desired weight goal', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter 1024 characters or less')])
+    calories = TextField(label='Enter goal calories', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter 1024 characters or less')])
     avgCalBurned = TextField(label='Enter avg calories burned in a day', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter 1024 characters or less')])
     location = TextField(label='Enter current city', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter 128 characters or less')])
-    notes = TextField(label='Enter any additional tidbits', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter 128 characters or less')])
 
 class RetrieveUserInfo(Form):
     userRetrieve = TextField(label='Username of user info to get', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of the desired user\'s information')])
@@ -19,9 +17,9 @@ class RetrieveUserInfo(Form):
 class DeleteUserInfo(Form):
     userRetrieve = TextField(label='Username of user to delete from system', description="db_delete", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter the username of user who\'s information to delete')])
 
-class UpdateUserWeight(Form):
-    username = TextField(label='Username of user to update weight', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter username')])
-    newWeight = TextField(label='New weight', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter new current weight')])
+class UpdateUserCalories(Form):
+    username = TextField(label='Username of user to update calories', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter username')])
+    newCalories = TextField(label='New calories', description="db_update", validators=[validators.required(), validators.Length(min=0, max=1024, message=u'Enter new target calories')])
 
 class EnterRecRecipeInfo(Form):
     username = TextField(label='Enter username', description="db_enter", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter 128 characters or less')])

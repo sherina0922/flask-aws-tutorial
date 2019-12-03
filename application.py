@@ -9,7 +9,7 @@ import sqlite3
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from application import db
 from application.models import User, RecommendedRecipe
-from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserWeight, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterRecipeInfo, GetRecRecipe
+from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserCalories, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterRecipeInfo, GetRecRecipe
 from pymongo import MongoClient
 import scrape_schema_recipe
 import json
@@ -73,7 +73,7 @@ def new_index():
     createUserForm = EnterUserInfo(request.form)
     getUserInfoForm = RetrieveUserInfo(request.form)
     deleteUserForm = DeleteUserInfo(request.form)
-    updateUserWeightForm = UpdateUserWeight(request.form)
+    updateUserCaloriesForm = UpdateUserCalories(request.form)
     createRecipeForm = EnterRecRecipeInfo(request.form)
     getUserRecRecipeHistForm = RetrieveRecRecipeInfo(request.form)
     deleteUserRecHistForm = DeleteRecRecipeInfo(request.form)
@@ -82,7 +82,7 @@ def new_index():
 
     if request.method == 'POST' and createUserForm.validate():
         #userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
-        data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data, name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data, weight=createUserForm.weight.data, weight_goal=createUserForm.weightGoal.data, avg_cals_burned=createUserForm.avgCalBurned.data, location=createUserForm.location.data, notes=createUserForm.notes.data)
+        data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data, name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data, calories=createUserForm.calories.data, avg_cals_burned=createUserForm.avgCalBurned.data, location=createUserForm.location.data)
         try:
             db.session.add(data_entered)
             db.session.commit()
@@ -93,9 +93,9 @@ def new_index():
         return render_template('thanks.html',username = createUserForm.username.data,
         password=createUserForm.password.data, name=createUserForm.name.data,
         gender=createUserForm.gender.data, budget=createUserForm.budget.data,
-        weight=createUserForm.weight.data, weight_goal=createUserForm.weightGoal.data,
+        calories=createUserForm.calories.data,
         avg_cals_burned=createUserForm.avgCalBurned.data,
-        location=createUserForm.location.data, notes=createUserForm.notes.data)
+        location=createUserForm.location.data)
         #change this html
 
     if request.method == 'POST' and getUserInfoForm.validate():
@@ -113,7 +113,7 @@ def new_index():
     # return redirect('/new')
     return render_template('new_index.html', createUserForm=createUserForm,
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
-    updateUserWeightForm=updateUserWeightForm,createRecipeForm = createRecipeForm,
+    updateUserCaloriesForm=updateUserCaloriesForm,createRecipeForm = createRecipeForm,
     getUserRecRecipeHistForm = getUserRecRecipeHistForm, deleteUserRecHistForm = deleteUserRecHistForm,
     updateUserRecDateForm = updateUserRecDateForm, enterRecipeForm=EnterRecipeInfo(request.form))
 
@@ -136,15 +136,15 @@ def delete_user():
         return render_template('goodbye.html', username_return=username_return)
 
 @application.route('/update', methods=['GET', 'POST'])
-def update_user_weight():
-    updateUserWeightForm = UpdateUserWeight(request.form)
-    if request.method == 'POST' and updateUserWeightForm.validate():
+def update_user_calories():
+    updateUserCaloriesForm = UpdateUserCalories(request.form)
+    if request.method == 'POST' and updateUserCaloriesForm.validate():
         try:
-            # userInfoDict = dict(item.split("=") for item in updateUserWeightForm.userInfo.data.split(";"))
+            # userInfoDict = dict(item.split("=") for item in updateUserCaloriesForm.userInfo.data.split(";"))
             # query_db = User.query.filter_by(username=userInfoDict.get("username")).one()
             # query_db.weight = userInfoDict.get("weight")
-            query_db = User.query.filter_by(username=updateUserWeightForm.username.data).one()
-            query_db.weight = updateUserWeightForm.newWeight.data
+            query_db = User.query.filter_by(username=updateUserCaloriesForm.username.data).one()
+            query_db.calories = updateUserCaloriesForm.newCalories.data
             db.session.commit()
             db.session.close()
         except:
@@ -254,7 +254,7 @@ def recommend_recipes(user_cals):
         recipe_cals = recipe['nutrition']['properties']['calories'].split()
         if (total_cals + int(recipe_cals[0])) <= user_cals:
             recipe_list.append(get_recipe_info(recipe))
-            total_cals += int(recipe_cals[0]) 
+            total_cals += int(recipe_cals[0])
     # return jsonify({'recipes': recipe_list})
     # df = json_normalize({'recipes': recipe_list})
     # parsed = json.loads({'recipes': recipe_list})
@@ -310,7 +310,7 @@ def index():
     createUserForm = EnterUserInfo(request.form)
     getUserInfoForm = RetrieveUserInfo(request.form)
     deleteUserForm = DeleteUserInfo(request.form)
-    updateUserWeightForm = UpdateUserWeight(request.form)
+    updateUserCaloriesForm = UpdateUserCalories(request.form)
     createRecipeForm = EnterRecRecipeInfo(request.form)
     getUserRecRecipeHistForm = RetrieveRecRecipeInfo(request.form)
     deleteUserRecHistForm = DeleteRecRecipeInfo(request.form)
@@ -319,7 +319,7 @@ def index():
 
     if request.method == 'POST' and createUserForm.validate():
         #userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
-        data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data, name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data, weight=createUserForm.weight.data, weight_goal=createUserForm.weightGoal.data, avg_cals_burned=createUserForm.avgCalBurned.data, location=createUserForm.location.data, notes=createUserForm.notes.data)
+        data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data, name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data, calories=createUserForm.calories.data, avg_cals_burned=createUserForm.avgCalBurned.data, location=createUserForm.location.data)
         try:
             db.session.add(data_entered)
             db.session.commit()
@@ -330,9 +330,9 @@ def index():
         return render_template('thanks.html',username = createUserForm.username.data,
         password=createUserForm.password.data, name=createUserForm.name.data,
         gender=createUserForm.gender.data, budget=createUserForm.budget.data,
-        weight=createUserForm.weight.data, weight_goal=createUserForm.weightGoal.data,
+        calories=createUserForm.calories.data,
         avg_cals_burned=createUserForm.avgCalBurned.data,
-        location=createUserForm.location.data, notes=createUserForm.notes.data)
+        location=createUserForm.location.data)
         #change this html
 
     if request.method == 'POST' and getUserInfoForm.validate():
@@ -349,7 +349,7 @@ def index():
 
     return render_template('index.html', createUserForm=createUserForm,
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
-    updateUserWeightForm=updateUserWeightForm,createRecipeForm = createRecipeForm,
+    updateUserCaloriesForm=updateUserCaloriesForm,createRecipeForm = createRecipeForm,
     getUserRecRecipeHistForm = getUserRecRecipeHistForm, deleteUserRecHistForm = deleteUserRecHistForm,
     updateUserRecDateForm = updateUserRecDateForm, enterRecipeForm=EnterRecipeInfo(request.form))
 
@@ -380,11 +380,10 @@ def check_user_for_recommendations():
                     user_dict["password"] = item[2]
                     user_dict["gender"] = item[3]
                     user_dict["budget"] = item[4]
-                    user_dict["weight"] = item[5]
-                    user_dict["weight_goal"] = item[6]
-                    user_dict["avg_cals_burned"] = item[7]
-                    user_dict["location"] = item[8]
-                    user_dict["notes"] = item[9]
+                    user_dict["calories"] = item[5]
+                    print(user_dict["calories"])
+                    user_dict["avg_cals_burned"] = item[6]
+                    user_dict["location"] = item[7]
                     result_arr.append(user_dict)
                 #query_db = cur.execute("DELETE FROM recommendedrecipes WHERE user_id=(?)", [username_return])
                 #check that username exists in database -> forward to recommendation system
@@ -396,7 +395,7 @@ def check_user_for_recommendations():
         print(result_arr)
         # recipes_list = read_mongo(recipe_db)
         # return JSONEncoder().encode(recipes_list)
-        return recommend_recipes(result_arr[0]["weight"])
+        return recommend_recipes(result_arr[0]["calories"])
     # return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
 
 if __name__ == '__main__':
