@@ -16,7 +16,11 @@ import json
 from bson import ObjectId
 from pandas.io.json import json_normalize
 import numpy as np
+import re
+import datetime
+import random
 
+date = 10
 # Elastic Beanstalk initalization
 application = Flask(__name__)
 application.debug=True
@@ -32,10 +36,17 @@ def store_data(mongo_update_lst, recipe_db):
     '''
     Store Recipe Information in MongoDB
     '''
+
     for json_dct in mongo_update_lst:
-        #print(json_dct)
+        json_dct = date_hook(json_dct)
         recipe_db.insert_one(json_dct)
     pass
+
+def date_hook(json_dict):
+    for (key, value) in json_dict.items():
+        if type(value) == datetime.timedelta:
+            json_dict[key] = str(value)
+    return json_dict
 
 def scrape_search(list_link):
     '''
@@ -161,7 +172,7 @@ def add_history():
         try:
             with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
-                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))",createRecipeForm.username.data, createRecipeForm,recipeId, createRecipeForm.recipeName.data, createRecipeForm.date.data)
+                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))", (createRecipeForm.recipeId, createRecipeForm.username.data, createRecipeForm.recipeName.data, createRecipeForm.date.data))
                 # result_arr = []
                 # for item in query_db:
                 #     recipe_dict = {}
@@ -196,8 +207,8 @@ def view_history():
                     user_dict = {}
                     user_dict["recipe_id"] = item[0]
                     user_dict["user_id"] = item[1]
-                    user_dict["recipe_name"] = item[2]
-                    user_dict["date_recommended"] = item[3]
+                    user_dict["recipe_name"] = item[3]
+                    user_dict["date_recommended"] = item[2]
                     result_arr.append(user_dict)
             db.session.close()
         except:
@@ -245,20 +256,63 @@ def get_recipes():
     recipes_list = read_mongo(recipe_db)
     return JSONEncoder().encode(recipes_list)
 
-def recommend_recipes(user_cals):
+def join_user_recipes(user_id):
+    rec_recipes_dict = []
+    with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+        cur = con.cursor()
+        query_db = cur.execute("SELECT recommendedrecipes.recipe_id, recommendedrecipes.date_recommended FROM users JOIN recommendedrecipes ON users.username = recommendedrecipes.user_id WHERE users.username=((?))", [user_id])
+        for item in query_db:
+            new_item = {}
+            new_item["recipe_id"] = item[0]
+            new_item["date_recommended"] = item[1]
+            print("item:", item[0],item[1])
+            rec_recipes_dict.append(new_item)
+        db.session.close()
+    return rec_recipes_dict
+
+
+def recommend_recipes(user_data):
     all_recipes = read_mongo(recipe_db)
+    random.shuffle(all_recipes)
     recipe_list = []
     total_cals = 0
+    total_recipes = 0
+    global date
+    #check the budget
     for recipe in all_recipes:
-        print(recipe)
-        recipe_cals = recipe['nutrition']['properties']['calories'].split()
-        if (total_cals + int(recipe_cals[0])) <= user_cals:
-            recipe_list.append(get_recipe_info(recipe))
-            total_cals += int(recipe_cals[0])
+        if total_recipes > 5:
+            break
+        recipe_data = get_recipe_info(recipe)
+        if not recipe_data['calories']:
+            continue
+        recipe_cals = recipe_data['calories'].split()
+        if (total_cals + int(recipe_cals[0])) <= (user_data["calories"] + user_data["avg_cals_burned"]):
+            try:
+                past_recipes_dict = join_user_recipes(user_data["username"])
+                with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+                    cur = con.cursor()
+                    for past_recipes in past_recipes_dict:
+                        if str(recipe["_id"]) == past_recipes["recipe_id"]:
+                            past_date = datetime.datetime.strptime(past_recipes["date_recommended"], "%m/%d/%Y").date()
+                            new_date = datetime.datetime.strptime("12/" + str(date) + "/2019", "%m/%d/%Y").date()
+                            elapsed_days = divmod((new_date-past_date).total_seconds(), 86400)[0]
+                            if abs(elapsed_days) > 2:
+                                query_db = cur.execute("DELETE FROM recommendedrecipes WHERE recipe_id=(?)",[str(recipe["_id"])])
+                                db.session.commit()
+                            break
+                    query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))", (str(recipe["_id"]), user_data["username"], recipe["name"], "12/" + str(date) + "/2019"))
+                    db.session.commit()
+                    db.session.close()
+                    recipe_list.append(recipe_data)
+                    total_cals += int(recipe_cals[0])
+                    total_recipes += 1
+            except sqlite3.IntegrityError: #to check that the same recipe is not being recommened again
+                continue
     # return jsonify({'recipes': recipe_list})
     # df = json_normalize({'recipes': recipe_list})
     # parsed = json.loads({'recipes': recipe_list})
     # return pandas.read_json(parsed)
+    date += 1 #for testing and demo purposes
     return jsonify({'recipes': recipe_list})
     # return json.dumps(parsed, indent=2, sort_keys=True)
     # return np.var(df.values)
@@ -267,7 +321,6 @@ def recommend_recipes(user_cals):
 def get_recipe_info(recipe):
     try:
         name = recipe['name']
-        print(name)
     except AttributeError:
         name = None
 
@@ -293,7 +346,9 @@ def get_recipe_info(recipe):
 
     try:
         calories = recipe['nutrition']['properties']['calories']
-    except AttributeError:
+    except KeyError:
+        calories = recipe['nutrition']['calories']
+    except:
         calories = None
 
     return {
@@ -368,7 +423,6 @@ def check_user_for_recommendations():
     if request.method == 'POST' and getRecRecipeForm.validate():
         result_arr = []
         username_return = getRecRecipeForm.userRetrieve.data
-            #check that username exists in database -> forward to recommendation system
         try:
             with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
@@ -381,33 +435,37 @@ def check_user_for_recommendations():
                     user_dict["gender"] = item[3]
                     user_dict["budget"] = item[4]
                     user_dict["calories"] = item[5]
-                    print(user_dict["calories"])
                     user_dict["avg_cals_burned"] = item[6]
                     user_dict["location"] = item[7]
                     result_arr.append(user_dict)
-                #query_db = cur.execute("DELETE FROM recommendedrecipes WHERE user_id=(?)", [username_return])
-                #check that username exists in database -> forward to recommendation system
             cur.close()
             db.session.close()
+            return recommend_recipes(result_arr[0])
         except:
             db.session.rollback()
         # return redirect('/')
-        print(result_arr)
+        # print(result_arr)
         # recipes_list = read_mongo(recipe_db)
         # return JSONEncoder().encode(recipes_list)
-        return recommend_recipes(result_arr[0]["calories"])
+        return render_template('noresult.html', username_return=username_return)
     # return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
 
 if __name__ == '__main__':
     # Test for mongo and set up for collection/etc
+    f = open("recipes.txt", "r")
+    if f.mode == "r":
+        contents = f.read()
+    #list_links = contents.split(",")
     list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
     db_client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
     db_mongo = db_client.allrecipes
     recipe_db = db_mongo.recipe_data
     mongo_data = scrape_search(list_links)
+
     x = recipe_db.delete_many({})
     store_data(mongo_data, recipe_db)
-    mongo_retrieve = read_mongo(recipe_db)
-    for recipe in mongo_retrieve:
-        print(recipe['nutrition']['properties']['calories'])
+    # mongo_retrieve = read_mongo(recipe_db)
+    # for recipe in mongo_retrieve:
+    #     recipe_data = get_recipe_info(recipe)
+    #     print(recipe_data['calories'])
     application.run(host='0.0.0.0')
