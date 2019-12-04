@@ -19,6 +19,11 @@ import numpy as np
 import re
 import datetime
 import random
+import csv
+import pandas as pd
+import sys, getopt, pprint
+from pprint import pprint
+import numpy as np
 
 date = 10
 # Elastic Beanstalk initalization
@@ -77,6 +82,25 @@ def read_mongo(collection, query={}):
         recipe_list.append(obj)
 
     return recipe_list
+
+def store_produce(reader, produce_db):
+    header = ['item_name', 'price']
+    for each in reader:
+        row = {}
+        for field in header:
+            row[field] = each[field]
+        produce_db.insert(row)
+
+def read_mongo_produce(collection, query={}):
+    """ Read from Mongo and Store into DataFrame """
+
+    # Connect to MongoDB
+    cursor = collection.find()
+    produce_list = []
+    for obj in cursor:
+        produce_list.append(obj)
+
+    return produce_list
 
 @application.route('/new', methods=['GET', 'POST'])
 @application.route('/new_index', methods=['GET', 'POST'])
@@ -270,12 +294,49 @@ def join_user_recipes(user_id):
         db.session.close()
     return rec_recipes_dict
 
+def get_recipe_price(recipe_name):
+    #look through item name ingredients
+    #open db for produce ingredients
+    #run through produce and see if we have a match
+    #if match, then we will add that price :: ELSE, we will randomly generate a number between 0-10
+    #return recipe price
+    total_cost = 0.0
+    print(type(total_cost))
+    recipe_list = []
+    cursor = recipe_db.find({"name":recipe_name})
+    for obj in cursor:
+        recipe_list.append(obj)
+    have_recipe_list = True if len(list(recipe_list)) else False
+    if have_recipe_list == True:
+    # all_recipes = read_mongo(recipe_db)
+    # # all_produce = read_mongo_produce(produce_db)
+    # for recipe in all_recipes:
+    #     recipe_data = get_recipe_info(recipe)
+        name = recipe_list[0]["name"]
+        if (name == recipe_name):
+            ingredients = recipe_list[0]["recipeIngredient"]
+            for ing in ingredients:
+                doc_list = []
+                cursor = produce_db.find({"item_name":ing})
+                for obj in cursor:
+                    doc_list.append(obj)
+                have_list = True if len(list(doc_list)) else False
+                if have_list == True:
+                    total_cost += doc_list[0]["price"]
+                else:
+                    total_cost+= np.random.uniform(0.0, 8.0)
+    return total_cost
+
+
+
+
 
 def recommend_recipes(user_data):
     all_recipes = read_mongo(recipe_db)
     random.shuffle(all_recipes)
     recipe_list = []
     total_cals = 0
+    total_cost = 0
     total_recipes = 0
     global date
     #check the budget
@@ -286,7 +347,9 @@ def recommend_recipes(user_data):
         if not recipe_data['calories']:
             continue
         recipe_cals = recipe_data['calories'].split()
-        if (total_cals + int(recipe_cals[0])) <= (user_data["calories"] + user_data["avg_cals_burned"]):
+        print("budget type:", (user_data["budget"]))
+        valid = ((total_cals + int(recipe_cals[0])) <= (user_data["calories"] + user_data["avg_cals_burned"])) and ((total_cost + get_recipe_price(recipe_data['name'])) <= float(user_data["budget"]))
+        if valid:
             try:
                 past_recipes_dict = join_user_recipes(user_data["username"])
                 with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
@@ -423,31 +486,49 @@ def check_user_for_recommendations():
     if request.method == 'POST' and getRecRecipeForm.validate():
         result_arr = []
         username_return = getRecRecipeForm.userRetrieve.data
-        try:
-            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
-                cur = con.cursor()
-                query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
-                for item in query_db:
-                    user_dict = {}
-                    user_dict["name"] = item[0]
-                    user_dict["username"] = item[1]
-                    user_dict["password"] = item[2]
-                    user_dict["gender"] = item[3]
-                    user_dict["budget"] = item[4]
-                    user_dict["calories"] = item[5]
-                    user_dict["avg_cals_burned"] = item[6]
-                    user_dict["location"] = item[7]
-                    result_arr.append(user_dict)
-            cur.close()
-            db.session.close()
-            return recommend_recipes(result_arr[0])
-        except:
-            db.session.rollback()
-        # return redirect('/')
-        # print(result_arr)
-        # recipes_list = read_mongo(recipe_db)
-        # return JSONEncoder().encode(recipes_list)
-        return render_template('noresult.html', username_return=username_return)
+        with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+            cur = con.cursor()
+            query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+            for item in query_db:
+                user_dict = {}
+                print(item)
+                user_dict["username"] = item[1]
+                user_dict["password"] = item[2]
+                user_dict["name"] = item[3]
+                user_dict["gender"] = item[4]
+                user_dict["budget"] = item[5]
+                user_dict["calories"] = item[6]
+                user_dict["avg_cals_burned"] = item[7]
+                user_dict["location"] = item[8]
+                result_arr.append(user_dict)
+        cur.close()
+        db.session.close()
+        return recommend_recipes(result_arr[0])
+        # try:
+        #     with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+        #         cur = con.cursor()
+        #         query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+        #         for item in query_db:
+        #             user_dict = {}
+        #             user_dict["name"] = item[0]
+        #             user_dict["username"] = item[1]
+        #             user_dict["password"] = item[2]
+        #             user_dict["gender"] = item[3]
+        #             user_dict["budget"] = item[4]
+        #             user_dict["calories"] = item[5]
+        #             user_dict["avg_cals_burned"] = item[6]
+        #             user_dict["location"] = item[7]
+        #             result_arr.append(user_dict)
+        #     cur.close()
+        #     db.session.close()
+        #     return recommend_recipes(result_arr[0])
+        # except:
+        #     db.session.rollback()
+        # # return redirect('/')
+        # # print(result_arr)
+        # # recipes_list = read_mongo(recipe_db)
+        # # return JSONEncoder().encode(recipes_list)
+        # return render_template('noresult.html', username_return=username_return)
     # return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
 
 if __name__ == '__main__':
@@ -456,16 +537,22 @@ if __name__ == '__main__':
     if f.mode == "r":
         contents = f.read()
     #list_links = contents.split(",")
+    #TODO: change back to all recipes
     list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
+    csvfile = open('produce_abridged.csv', 'r')
+    reader = csv.DictReader(csvfile)
     db_client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
     db_mongo = db_client.allrecipes
+    db_mongo_produce = db_client.allproduce
     recipe_db = db_mongo.recipe_data
+    produce_db = db_mongo_produce.produce_data
     mongo_data = scrape_search(list_links)
-
     x = recipe_db.delete_many({})
     store_data(mongo_data, recipe_db)
-    # mongo_retrieve = read_mongo(recipe_db)
-    # for recipe in mongo_retrieve:
-    #     recipe_data = get_recipe_info(recipe)
-    #     print(recipe_data['calories'])
+    mongo_retrieve = read_mongo(recipe_db)
+    y = produce_db.delete_many({})
+    store_produce(reader, produce_db)
+    produce_retrieve = read_mongo_produce(produce_db)
+    for produce in produce_retrieve:
+        pprint(produce)
     application.run(host='0.0.0.0')
