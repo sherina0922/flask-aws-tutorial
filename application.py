@@ -8,22 +8,15 @@ Step-by-step tutorial: https://medium.com/@rodkey/deploying-a-flask-application-
 import sqlite3
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from application import db
-from application.models import User, RecommendedRecipe
+from application.models import User, RecommendedRecipe, recipe_db, produce_db, read_mongo, read_mongo_produce
 from application.forms import EnterUserInfo, RetrieveUserInfo, DeleteUserInfo, UpdateUserCalories, EnterRecRecipeInfo, RetrieveRecRecipeInfo, DeleteRecRecipeInfo, UpdateRecRecipeDate, EnterRecipeInfo, GetRecRecipe
-from pymongo import MongoClient
-import scrape_schema_recipe
 import json
 from bson import ObjectId
 from pandas.io.json import json_normalize
 import numpy as np
-import re
 import datetime
 import random
-import csv
 import pandas as pd
-import sys, getopt, pprint
-from pprint import pprint
-import numpy as np
 
 date = 10
 # Elastic Beanstalk initalization
@@ -31,76 +24,12 @@ application = Flask(__name__)
 application.debug=True
 # change this to your own value
 application.secret_key = 'cC1YCIWOj9GgWspgNEo2'
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, ObjectId):
             return str(o)
         return json.JSONEncoder.default(self, o)
-
-def store_data(mongo_update_lst, recipe_db):
-    '''
-    Store Recipe Information in MongoDB
-    '''
-
-    for json_dct in mongo_update_lst:
-        json_dct = date_hook(json_dct)
-        recipe_db.insert_one(json_dct)
-    pass
-
-def date_hook(json_dict):
-    for (key, value) in json_dict.items():
-        if type(value) == datetime.timedelta:
-            json_dict[key] = str(value)
-    return json_dict
-
-def scrape_search(list_link):
-    '''
-    Input:  (1) link to search page
-            (2) recipe MongoDB
-    Output: (1) list of data to be stored in MongoDB
-    '''
-
-    #Parse url string to locate recipe name and number
-
-    mongo_update_lst = []
-    for recipe_url in list_link:
-        r = None
-        try:
-            r = scrape_schema_recipe.scrape_url(recipe_url, python_objects=True)
-        except:
-            print('Could not scrape URL {}'.format(recipe_url))
-        mongo_update_lst.append(r[0])
-    return mongo_update_lst
-
-def read_mongo(collection, query={}):
-    """ Read from Mongo and Store into DataFrame """
-
-    # Connect to MongoDB
-    cursor = collection.find()
-    recipe_list = []
-    for obj in cursor:
-        recipe_list.append(obj)
-
-    return recipe_list
-
-def store_produce(reader, produce_db):
-    header = ['item_name', 'price']
-    for each in reader:
-        row = {}
-        for field in header:
-            row[field] = each[field]
-        produce_db.insert(row)
-
-def read_mongo_produce(collection, query={}):
-    """ Read from Mongo and Store into DataFrame """
-
-    # Connect to MongoDB
-    cursor = collection.find()
-    produce_list = []
-    for obj in cursor:
-        produce_list.append(obj)
-
-    return produce_list
 
 @application.route('/new', methods=['GET', 'POST'])
 @application.route('/new_index', methods=['GET', 'POST'])
@@ -137,15 +66,16 @@ def new_index():
         query_db = None
         try:
             username_return = getUserInfoForm.userRetrieve.data
-            query_db = User.query.filter_by(username=username_return).one()
-            db.session.expunge(query_db)
-            db.session.close()
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+                db.session.expunge(query_db)
+                db.session.close()
         except:
             db.session.rollback()
             return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
-    # return redirect('/new')
     return render_template('new_index.html', createUserForm=createUserForm,
     getUserInfoForm=getUserInfoForm,deleteUserForm=deleteUserForm,
     updateUserCaloriesForm=updateUserCaloriesForm,createRecipeForm = createRecipeForm,
@@ -175,9 +105,7 @@ def update_user_calories():
     updateUserCaloriesForm = UpdateUserCalories(request.form)
     if request.method == 'POST' and updateUserCaloriesForm.validate():
         try:
-            # userInfoDict = dict(item.split("=") for item in updateUserCaloriesForm.userInfo.data.split(";"))
-            # query_db = User.query.filter_by(username=userInfoDict.get("username")).one()
-            # query_db.weight = userInfoDict.get("weight")
+
             query_db = User.query.filter_by(username=updateUserCaloriesForm.username.data).one()
             query_db.calories = updateUserCaloriesForm.newCalories.data
             db.session.commit()
@@ -197,14 +125,6 @@ def add_history():
             with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
                 query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))", (createRecipeForm.recipeId, createRecipeForm.username.data, createRecipeForm.recipeName.data, createRecipeForm.date.data))
-                # result_arr = []
-                # for item in query_db:
-                #     recipe_dict = {}
-                #     recipe_dict["user_id"] = item[0]
-                #     recipe_dict["recipe_id"] = item[1]
-                #     recipe_dict["recipe_name"] = item[2]
-                #     recipe_dict["date_recommended"] = item[3]
-                #     result_arr.append(user_dict)
             db.session.add(data_entered)
             db.session.commit()
             db.session.expunge(query_db)
@@ -251,9 +171,7 @@ def delete_history():
                 query_db = cur.execute("DELETE FROM recommendedrecipes WHERE user_id=(?)", [username_return])
                 con.commit()
                 cur.close()
-            #db.session.commit()
             db.session.close()
-            #con.close()
         except:
             db.session.rollback()
         return redirect('/')
@@ -295,23 +213,13 @@ def join_user_recipes(user_id):
     return rec_recipes_dict
 
 def get_recipe_price(recipe_name):
-    #look through item name ingredients
-    #open db for produce ingredients
-    #run through produce and see if we have a match
-    #if match, then we will add that price :: ELSE, we will randomly generate a number between 0-10
-    #return recipe price
     total_cost = 0.0
-    print(type(total_cost))
     recipe_list = []
     cursor = recipe_db.find({"name":recipe_name})
     for obj in cursor:
         recipe_list.append(obj)
     have_recipe_list = True if len(list(recipe_list)) else False
     if have_recipe_list == True:
-    # all_recipes = read_mongo(recipe_db)
-    # # all_produce = read_mongo_produce(produce_db)
-    # for recipe in all_recipes:
-    #     recipe_data = get_recipe_info(recipe)
         name = recipe_list[0]["name"]
         if (name == recipe_name):
             ingredients = recipe_list[0]["recipeIngredient"]
@@ -326,10 +234,6 @@ def get_recipe_price(recipe_name):
                 else:
                     total_cost+= np.random.uniform(0.0, 8.0)
     return total_cost
-
-
-
-
 
 def recommend_recipes(user_data):
     all_recipes = read_mongo(recipe_db)
@@ -486,73 +390,50 @@ def check_user_for_recommendations():
     if request.method == 'POST' and getRecRecipeForm.validate():
         result_arr = []
         username_return = getRecRecipeForm.userRetrieve.data
-        with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
-            cur = con.cursor()
-            query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
-            for item in query_db:
-                user_dict = {}
-                print(item)
-                user_dict["username"] = item[1]
-                user_dict["password"] = item[2]
-                user_dict["name"] = item[3]
-                user_dict["gender"] = item[4]
-                user_dict["budget"] = item[5]
-                user_dict["calories"] = item[6]
-                user_dict["avg_cals_burned"] = item[7]
-                user_dict["location"] = item[8]
-                result_arr.append(user_dict)
-        cur.close()
-        db.session.close()
-        return recommend_recipes(result_arr[0])
-        # try:
-        #     with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
-        #         cur = con.cursor()
-        #         query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
-        #         for item in query_db:
-        #             user_dict = {}
-        #             user_dict["name"] = item[0]
-        #             user_dict["username"] = item[1]
-        #             user_dict["password"] = item[2]
-        #             user_dict["gender"] = item[3]
-        #             user_dict["budget"] = item[4]
-        #             user_dict["calories"] = item[5]
-        #             user_dict["avg_cals_burned"] = item[6]
-        #             user_dict["location"] = item[7]
-        #             result_arr.append(user_dict)
-        #     cur.close()
-        #     db.session.close()
-        #     return recommend_recipes(result_arr[0])
-        # except:
-        #     db.session.rollback()
-        # # return redirect('/')
-        # # print(result_arr)
-        # # recipes_list = read_mongo(recipe_db)
-        # # return JSONEncoder().encode(recipes_list)
-        # return render_template('noresult.html', username_return=username_return)
+        # with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+        #     cur = con.cursor()
+        #     query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+        #     for item in query_db:
+        #         user_dict = {}
+        #         print(item)
+        #         user_dict["username"] = item[1]
+        #         user_dict["password"] = item[2]
+        #         user_dict["name"] = item[3]
+        #         user_dict["gender"] = item[4]
+        #         user_dict["budget"] = item[5]
+        #         user_dict["calories"] = item[6]
+        #         user_dict["avg_cals_burned"] = item[7]
+        #         user_dict["location"] = item[8]
+        #         result_arr.append(user_dict)
+        # cur.close()
+        # db.session.close()
+        # return recommend_recipes(result_arr[0])
+        try:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+                for item in query_db:
+                    user_dict = {}
+                    user_dict["username"] = item[1]
+                    user_dict["password"] = item[2]
+                    user_dict["name"] = item[3]
+                    user_dict["gender"] = item[4]
+                    user_dict["budget"] = item[5]
+                    user_dict["calories"] = item[6]
+                    user_dict["avg_cals_burned"] = item[7]
+                    user_dict["location"] = item[8]
+                    result_arr.append(user_dict)
+            cur.close()
+            db.session.close()
+            return recommend_recipes(result_arr[0])
+        except:
+            db.session.rollback()
+        # return redirect('/')
+        # print(result_arr)
+        # recipes_list = read_mongo(recipe_db)
+        # return JSONEncoder().encode(recipes_list)
+        return render_template('noresult.html', username_return=username_return)
     # return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
 
 if __name__ == '__main__':
-    # Test for mongo and set up for collection/etc
-    f = open("recipes.txt", "r")
-    if f.mode == "r":
-        contents = f.read()
-    #list_links = contents.split(",")
-    #TODO: change back to all recipes
-    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
-    csvfile = open('produce_abridged.csv', 'r')
-    reader = csv.DictReader(csvfile)
-    db_client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
-    db_mongo = db_client.allrecipes
-    db_mongo_produce = db_client.allproduce
-    recipe_db = db_mongo.recipe_data
-    produce_db = db_mongo_produce.produce_data
-    mongo_data = scrape_search(list_links)
-    x = recipe_db.delete_many({})
-    store_data(mongo_data, recipe_db)
-    mongo_retrieve = read_mongo(recipe_db)
-    y = produce_db.delete_many({})
-    store_produce(reader, produce_db)
-    produce_retrieve = read_mongo_produce(produce_db)
-    for produce in produce_retrieve:
-        pprint(produce)
     application.run(host='0.0.0.0')
