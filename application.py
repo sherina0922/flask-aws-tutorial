@@ -1,8 +1,9 @@
 '''
-Simple Flask application to test deployment to Amazon Web Services
-Uses Elastic Beanstalk and RDS
-Author: Scott Rodkey - rodkeyscott@gmail.com
-Step-by-step tutorial: https://medium.com/@rodkey/deploying-a-flask-application-on-aws-a72daba6bb80
+Food Byte Application for CS 411
+Authors:
+Ritika Sinha
+Grace Cao
+Sherina Hung
 '''
 
 import sqlite3
@@ -48,7 +49,6 @@ def new_index():
     deleteFriendForm = DeleteFriend(request.form)
 
     if request.method == 'POST' and createUserForm.validate():
-        #userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
         data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data,
         name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data,
         calories=createUserForm.calories.data, avg_cals_burned=createUserForm.avgCalBurned.data,
@@ -66,20 +66,21 @@ def new_index():
         calories=createUserForm.calories.data,
         avg_cals_burned=createUserForm.avgCalBurned.data,
         location=createUserForm.location.data)
-        #change this html
 
     if request.method == 'POST' and getUserInfoForm.validate():
         query_db = None
-        try:
-            username_return = getUserInfoForm.userRetrieve.data
-            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
-                cur = con.cursor()
-                query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
-                db.session.expunge(query_db)
-                db.session.close()
-        except:
-            db.session.rollback()
-            return render_template('noresult.html', username_return=username_return)
+        username_return = getUserInfoForm.userRetrieve.data
+        query_db = User.query.filter_by(username=username_return).one()
+        db.session.expunge(query_db)
+        db.session.close()
+        # try:
+        #     username_return = getUserInfoForm.userRetrieve.data
+        #     query_db = User.query.filter_by(username=username_return).one()
+        #     db.session.expunge(query_db)
+        #     db.session.close()
+        # except:
+        #     db.session.rollback()
+        #     return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
     return render_template('new_index.html', createUserForm=createUserForm,
@@ -191,7 +192,7 @@ def add_history():
         try:
             with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
                 cur = con.cursor()
-                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))", (createRecipeForm.recipeId, createRecipeForm.username.data, createRecipeForm.recipeName.data, createRecipeForm.date.data))
+                query_db = cur.execute("INSERT INTO recommendedrecipes VALUES ((?), (?), (?), (?))", (createRecipeForm.recipeId.data, createRecipeForm.username.data, createRecipeForm.recipeName.data, createRecipeForm.date.data))
             db.session.add(data_entered)
             db.session.commit()
             db.session.expunge(query_db)
@@ -218,8 +219,8 @@ def view_history():
                     user_dict = {}
                     user_dict["recipe_id"] = item[0]
                     user_dict["user_id"] = item[1]
-                    user_dict["recipe_name"] = item[3]
-                    user_dict["date_recommended"] = item[2]
+                    user_dict["recipe_name"] = item[2]
+                    user_dict["date_recommended"] = item[3]
                     result_arr.append(user_dict)
             db.session.close()
         except:
@@ -324,7 +325,6 @@ def get_recipe_price(recipe_name):
     return total_cost
 
 def recommend_recipes(user_data):
-
     friend_recipes = get_friend_recipes(user_data["username"])
     if friend_recipes != -1:
         all_recipes = friend_recipes
@@ -367,15 +367,8 @@ def recommend_recipes(user_data):
                     total_recipes += 1
             except sqlite3.IntegrityError: #to check that the same recipe is not being recommened again
                 continue
-    # return jsonify({'recipes': recipe_list})
-    # df = json_normalize({'recipes': recipe_list})
-    # parsed = json.loads({'recipes': recipe_list})
-    # return pandas.read_json(parsed)
     date += 1 #for testing and demo purposes
     return jsonify({'recipes': recipe_list})
-    # return json.dumps(parsed, indent=2, sort_keys=True)
-    # return np.var(df.values)
-
 
 def get_recipe_info(recipe):
     try:
@@ -392,11 +385,6 @@ def get_recipe_info(recipe):
         instructions = recipe['recipeInstructions']
     except AttributeError:
         instructions = None
-
-    # try:
-    #     author = recipe['author']
-    # except AttributeError:
-    #     author = None
 
     try:
         prepTime = recipe['prepTime']
@@ -435,7 +423,6 @@ def index():
     deleteFriendForm = DeleteFriend(request.form)
 
     if request.method == 'POST' and createUserForm.validate():
-        #userInfoDict = dict(item.split("=") for item in createUserForm.dbInfo.data.split(";"))
         data_entered = User(username=createUserForm.username.data, password=createUserForm.password.data, name=createUserForm.name.data, gender=createUserForm.gender.data, budget=createUserForm.budget.data, calories=createUserForm.calories.data, avg_cals_burned=createUserForm.avgCalBurned.data, location=createUserForm.location.data)
         try:
             db.session.add(data_entered)
@@ -450,18 +437,21 @@ def index():
         calories=createUserForm.calories.data,
         avg_cals_burned=createUserForm.avgCalBurned.data,
         location=createUserForm.location.data)
-        #change this html
 
     if request.method == 'POST' and getUserInfoForm.validate():
         query_db = None
-        try:
-            username_return = getUserInfoForm.userRetrieve.data
-            query_db = User.query.filter_by(username=username_return).one()
-            db.session.expunge(query_db)
-            db.session.close()
-        except:
-            db.session.rollback()
-            return render_template('noresult.html', username_return=username_return)
+        username_return = getUserInfoForm.userRetrieve.data
+        query_db = User.query.filter_by(username=username_return).one()
+        db.session.expunge(query_db)
+        db.session.close()
+        # try:
+        #     username_return = getUserInfoForm.userRetrieve.data
+        #     query_db = User.query.filter_by(username=username_return).one()
+        #     db.session.expunge(query_db)
+        #     db.session.close()
+        # except:
+        #     db.session.rollback()
+        #     return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
     return render_template('index.html', createUserForm=createUserForm,
@@ -486,49 +476,27 @@ def check_user_for_recommendations():
     if request.method == 'POST' and getRecRecipeForm.validate():
         result_arr = []
         username_return = getRecRecipeForm.userRetrieve.data
-        with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
-            cur = con.cursor()
-            query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
-            for item in query_db:
-                user_dict = {}
-                user_dict["username"] = item[1]
-                user_dict["password"] = item[2]
-                user_dict["name"] = item[3]
-                user_dict["gender"] = item[4]
-                user_dict["budget"] = item[5]
-                user_dict["calories"] = item[6]
-                user_dict["avg_cals_burned"] = item[7]
-                user_dict["location"] = item[8]
-                result_arr.append(user_dict)
-        cur.close()
-        db.session.close()
-        return recommend_recipes(result_arr[0])
-        # try:
-        #     with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
-        #         cur = con.cursor()
-        #         query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
-        #         for item in query_db:
-        #             user_dict = {}
-        #             user_dict["username"] = item[1]
-        #             user_dict["password"] = item[2]
-        #             user_dict["name"] = item[3]
-        #             user_dict["gender"] = item[4]
-        #             user_dict["budget"] = item[5]
-        #             user_dict["calories"] = item[6]
-        #             user_dict["avg_cals_burned"] = item[7]
-        #             user_dict["location"] = item[8]
-        #             result_arr.append(user_dict)
-        #     cur.close()
-        #     db.session.close()
-        #     return recommend_recipes(result_arr[0])
-        # except:
-        #     db.session.rollback()
-        # # return redirect('/')
-        # # print(result_arr)
-        # # recipes_list = read_mongo(recipe_db)
-        # # return JSONEncoder().encode(recipes_list)
-        # return render_template('noresult.html', username_return=username_return)
-    # return render_template('get_recipes.html', getRecRecipeForm=getRecRecipeForm)
+        try:
+            with sqlite3.connect("/Users/ritikasinha/Downloads/flask-aws-tutorial/application/test.db") as con:
+                cur = con.cursor()
+                query_db = cur.execute("SELECT * FROM users WHERE username=(?)",[username_return])
+                for item in query_db:
+                    user_dict = {}
+                    user_dict["username"] = item[1]
+                    user_dict["password"] = item[2]
+                    user_dict["name"] = item[3]
+                    user_dict["gender"] = item[4]
+                    user_dict["budget"] = item[5]
+                    user_dict["calories"] = item[6]
+                    user_dict["avg_cals_burned"] = item[7]
+                    user_dict["location"] = item[8]
+                    result_arr.append(user_dict)
+            cur.close()
+            db.session.close()
+            return recommend_recipes(result_arr[0])
+        except:
+            db.session.rollback()
+        return render_template('noresult.html', username_return=username_return)
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0')

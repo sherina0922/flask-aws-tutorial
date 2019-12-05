@@ -56,7 +56,7 @@ class Friends(db.Model):
     user_name = db.Column(db.String(128), db.ForeignKey(User.username, ondelete='CASCADE'), primary_key=True)
     friend_name = db.Column(db.String(128), db.ForeignKey(User.username, ondelete='CASCADE'), primary_key=True) #change integer to string for username
 
-    users = relationship("User", foreign_keys=[user_name], single_parent=True)
+    friend_users = relationship("User", foreign_keys=[user_name], single_parent=True)
     friends = relationship("User", foreign_keys=[friend_name], single_parent=True)
 
 
@@ -79,8 +79,8 @@ def RecipeMongoSetUp():
     f = open("recipes.txt", "r")
     if f.mode == "r":
         contents = f.read()
-    #list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
-    list_links = contents.split(",")
+    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
+    #list_links = contents.split(",")
     mongo_data = scrape_search(list_links)
     x = recipe_db.delete_many({})
     store_data(mongo_data, recipe_db)
@@ -93,8 +93,6 @@ def ProduceMongoSetUp():
     y = produce_db.delete_many({})
     store_produce(reader, produce_db)
     produce_retrieve = read_mongo_produce(produce_db)
-    # for produce in produce_retrieve:
-    #     pprint(produce)
     return produce_retrieve
 
 def store_data(mongo_update_lst, recipe_db):
@@ -116,11 +114,8 @@ def date_hook(json_dict):
 def scrape_search(list_link):
     '''
     Input:  (1) link to search page
-            (2) recipe MongoDB
     Output: (1) list of data to be stored in MongoDB
     '''
-
-    #Parse url string to locate recipe name and number
 
     mongo_update_lst = []
     for recipe_url in list_link:
