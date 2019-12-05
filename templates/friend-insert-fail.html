@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% import 'macros.html' as macros %}
+{% block content %}
+
+<div class="col-md-4 col-md-offset-4">
+
+      <div align="center">
+        <h2>Error: Friend entry with user_name={{user_name}} and friend_name={{friend_name}} already exists or one or more users may not exist in the system. Insertion cancelled.</h2>
+      </div>
+
+</div>
+
+<div align="center"
+    <p><a href="/new"><button type="submit" class="btn btn-primary">Return home</button></p></a>
+</div>
+
+
+{% endblock %}

@@ -8,6 +8,7 @@ import csv
 import pandas as pd
 import sys, getopt, pprint
 from pprint import pprint
+from sqlalchemy.orm import relationship, backref
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -50,6 +51,22 @@ class RecommendedRecipe(db.Model):
     def __repr__(self):
         return '<Recipe %r>' % self.recipe_name
 
+class Friends(db.Model):
+    __tablename__ = 'friends'
+    user_name = db.Column(db.String(128), db.ForeignKey(User.username, ondelete='CASCADE'), primary_key=True)
+    friend_name = db.Column(db.String(128), db.ForeignKey(User.username, ondelete='CASCADE'), primary_key=True) #change integer to string for username
+
+    users = relationship("User", foreign_keys=[user_name], single_parent=True)
+    friends = relationship("User", foreign_keys=[friend_name], single_parent=True)
+
+
+    def __init__(self, friend_name, user_name):
+        self.friend_name = friend_name
+        self.user_name = user_name
+
+    def __repr__(self):
+        return '<Friends %r>' % self.friend_name
+
 #===========================MONGO SET UP==================================
 
 db_client = MongoClient("mongodb://127.0.0.1:27017")  # host uri
@@ -59,11 +76,11 @@ db_mongo_produce = db_client.allproduce
 produce_db = db_mongo_produce.produce_data
 
 def RecipeMongoSetUp():
-    # f = open("recipes.txt", "r")
-    # if f.mode == "r":
-    #     contents = f.read()
-    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
-    #list_links = contents.split(",")
+    f = open("recipes.txt", "r")
+    if f.mode == "r":
+        contents = f.read()
+    #list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
+    list_links = contents.split(",")
     mongo_data = scrape_search(list_links)
     x = recipe_db.delete_many({})
     store_data(mongo_data, recipe_db)
@@ -112,6 +129,7 @@ def scrape_search(list_link):
             r = scrape_schema_recipe.scrape_url(recipe_url, python_objects=True)
         except:
             print('Could not scrape URL {}'.format(recipe_url))
+        print(recipe_url)
         mongo_update_lst.append(r[0])
     return mongo_update_lst
 

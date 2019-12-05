@@ -1,0 +1,20 @@
+{% extends "base.html" %} {% import 'macros.html' as macros %}
+{% block content %}
+
+<div class="col-md-4 col-md-offset-4">
+
+      <div align="center">
+        <h2>Congratulations!!! {{results.user_name}} has made a new friend:</h2>
+        <ul style="list-style-type:none">
+         <li>Username: {{results.friend_name}}</li>
+        </ul>
+      </div>
+
+</div>
+
+<div align="center"
+    <p><a href="/new"><button type="submit" class="btn btn-primary">Return home</button></p></a>
+</div>
+
+
+{% endblock %}

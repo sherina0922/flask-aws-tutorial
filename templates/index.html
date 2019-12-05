@@ -63,6 +63,43 @@
 <hr>
 <hr>
 
+<!-- friends -->
+
+<form method="post" action="/add-friend"  id="db_post" name="db_post_friend">
+
+    {{ addFriendForm.hidden_tag() }}
+
+    {{ macros.render_field(addFriendForm.userRetrieve, placeholder='Enter username', type='userRetrieve', label_visible=false) }}
+    {{ macros.render_field(addFriendForm.friendRetrieve, placeholder='Enter new friend\'s username', type='friendRetrieve', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Add Friend</button></p></div>
+
+</form>
+
+<form method="post" action="/view-friends"  id="db_post" name="db_view_friends">
+
+    {{ viewFriendsForm.hidden_tag() }}
+
+    {{ macros.render_field(viewFriendsForm.userRetrieve, placeholder='Retrieve list of user\'s friends (enter username)', type='userRetrieve', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Retrieve user's friend list</button></p></div>
+
+</form>
+
+<form method="post" action="/delete-friend"  id="db_post" name="db_delete_friend">
+
+    {{ deleteFriendForm.hidden_tag() }}
+
+    {{ macros.render_field(deleteFriendForm.userRetrieve, placeholder='Enter username', type='userRetrieve', label_visible=false) }}
+    {{ macros.render_field(deleteFriendForm.friendRetrieve, placeholder='Enter username of friend to delete', type='friendRetrieve', label_visible=false) }}
+
+    <div align="center"><button type="submit" class="btn btn-primary">Delete user recipe history</button></p></div>
+
+</form>
+
+<hr>
+<hr>
+
 <!-- recommended recipe -->
 
 <!-- username=gracesc2;recipe_id=1001;recipe_name=green tea cake;date=00-00-00 -->

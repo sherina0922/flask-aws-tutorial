@@ -41,3 +41,14 @@ class EnterRecipeInfo(Form):
 
 class GetRecRecipe(Form):
     userRetrieve = TextField(label='Username of user to recommend recipes for', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of the user to recommend recipes for')])
+
+class AddFriend(Form):
+    userRetrieve = TextField(label='Username of user', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of the user')])
+    friendRetrieve = TextField(label='Username of new friend', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of new friend')])
+
+class DeleteFriend(Form):
+    userRetrieve = TextField(label='Username of user', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of the user')])
+    friendRetrieve = TextField(label='Username of new friend', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of new friend')])
+
+class ViewFriends(Form):
+    userRetrieve = TextField(label='Username of user', description="db_get", validators=[validators.required(), validators.Length(min=0, max=128, message=u'Enter the username of the user')])
