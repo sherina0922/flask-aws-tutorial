@@ -79,8 +79,8 @@ def RecipeMongoSetUp():
     f = open("recipes.txt", "r")
     if f.mode == "r":
         contents = f.read()
-    list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
-    #list_links = contents.split(",")
+    #list_links = ['http://allrecipes.com/Recipe/Apple-Cake-Iv/Detail.aspx', 'http://www.epicurious.com/recipes/food/views/chocolate-amaretto-souffles-104730', 'http://www.epicurious.com/recipes/food/views/coffee-almond-ice-cream-cake-with-dark-chocolate-sauce-11036', 'http://www.epicurious.com/recipes/food/views/toasted-almond-mocha-ice-cream-tart-12550']
+    list_links = contents.split(",")
     mongo_data = scrape_search(list_links)
     x = recipe_db.delete_many({})
     store_data(mongo_data, recipe_db)

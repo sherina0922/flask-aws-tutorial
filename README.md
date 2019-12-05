@@ -1,18 +1,9 @@
-### Deploying a Flask application in AWS: An end-to-end tutorial
+### Food Byte CS 411 Project
 
-This is the code that goes along with the detailed writeup here:
+To tool around with the app directly, here's a quickstart guide.
 
-https://medium.com/@rodkey/deploying-a-flask-application-on-aws-a72daba6bb80
+Clone this repo to your local machine.
 
-It's a simple Flask app that writes and reads from a database. It uses Amazon RDS for the database backend, but you can make things even simpler and use a local DB.
-
-To tool around with the app directly, here's a quickstart guide. 
-
-Clone this repo to your local machine. In the top level directory, create a virtual environment:
-```
-$ virtualenv flask-aws
-$ source flask-aws/bin/activate
-```
 Now install the required modules:
 ```
 $ pip install -r requirements.txt
@@ -45,4 +36,8 @@ Using the bottom form, you can see the last 1 to 9 entires of the database in re
 
 ![results](http://i.imgur.com/LFJeKDz.png)
 
+By: Ritika Sinha, Grace Cao, Sherina Hung
 
+Sources Used for inspiration:
+https://github.com/inkjet/flask-aws-tutorial
+https://github.com/RoseMarieNeilson/Diced-A-Recipe-Recommender

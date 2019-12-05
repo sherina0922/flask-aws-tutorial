@@ -69,18 +69,14 @@ def new_index():
 
     if request.method == 'POST' and getUserInfoForm.validate():
         query_db = None
-        username_return = getUserInfoForm.userRetrieve.data
-        query_db = User.query.filter_by(username=username_return).one()
-        db.session.expunge(query_db)
-        db.session.close()
-        # try:
-        #     username_return = getUserInfoForm.userRetrieve.data
-        #     query_db = User.query.filter_by(username=username_return).one()
-        #     db.session.expunge(query_db)
-        #     db.session.close()
-        # except:
-        #     db.session.rollback()
-        #     return render_template('noresult.html', username_return=username_return)
+        try:
+            username_return = getUserInfoForm.userRetrieve.data
+            query_db = User.query.filter_by(username=username_return).one()
+            db.session.expunge(query_db)
+            db.session.close()
+        except:
+            db.session.rollback()
+            return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
     return render_template('new_index.html', createUserForm=createUserForm,
@@ -440,18 +436,14 @@ def index():
 
     if request.method == 'POST' and getUserInfoForm.validate():
         query_db = None
-        username_return = getUserInfoForm.userRetrieve.data
-        query_db = User.query.filter_by(username=username_return).one()
-        db.session.expunge(query_db)
-        db.session.close()
-        # try:
-        #     username_return = getUserInfoForm.userRetrieve.data
-        #     query_db = User.query.filter_by(username=username_return).one()
-        #     db.session.expunge(query_db)
-        #     db.session.close()
-        # except:
-        #     db.session.rollback()
-        #     return render_template('noresult.html', username_return=username_return)
+        try:
+            username_return = getUserInfoForm.userRetrieve.data
+            query_db = User.query.filter_by(username=username_return).one()
+            db.session.expunge(query_db)
+            db.session.close()
+        except:
+            db.session.rollback()
+            return render_template('noresult.html', username_return=username_return)
         return render_template('results.html', results=query_db, username_return=username_return)
 
     return render_template('index.html', createUserForm=createUserForm,
